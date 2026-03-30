@@ -1,0 +1,439 @@
+.Logo {
+    width: 150px;
+}
+.Logo:hover {
+    width: 160px;
+}
+
+header {
+    background: linear-gradient(90deg, #454797, #FB8083);
+    font-size: 24px;
+}
+
+.bandeau {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.start {
+    text-align: left;
+    filter: drop-shadow(0px 10px 15px rgba(0, 0, 0, 0.7));
+}
+.middle {
+    text-align: center;
+}
+.end {
+    text-align: right;
+}
+.login {
+    color: red;
+    font-size: 25px;
+    border: solid;
+    background-color: yellow;
+    border-radius: 10px;
+}
+
+/* Style du menu */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: white;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.dropdown-content.show {
+    display: block;
+}
+
+.menu-item {
+    text-align: left;
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    box-sizing: border-box;
+    height: 85vh;
+}
+
+.corp {
+    display: flex;
+    justify-content: space-evenly;
+    gap: 10px;
+    padding: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    height: 100%;
+}
+
+.tuile {
+    background: whitesmoke;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 10px;
+    padding: 20px;
+    box-sizing: border-box;
+    margin: 10px;
+    box-shadow: 0px 6px 24px rgba(0, 0, 0, 0.2);
+    transition: transform 160ms ease, box-shadow 160ms ease;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.tuile:hover {
+    transform: scale(1.03);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}
+
+/* Chat styles */
+.chat h3 {
+    margin: 10px 0;
+}
+.chat .chat-log {
+    height: 70%;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+.chat .comment {
+    margin: 6px 0;
+    font-size: 14px;
+}
+.chat textarea {
+    width: 100%;
+    box-sizing: border-box;
+    height: 30%;
+    padding: 8px;
+    resize: vertical;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-bottom: 8px;
+}
+
+.btn-add-comment {
+    display: inline-block;
+    padding: 8px 12px;
+    background: #6c6cff;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* Collaborateurs : avatars empilés */
+.avatar-stack {
+    display: flex;
+    align-items: center;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #6c6cff;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-left: -12px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.avatar:first-child {
+    margin-left: 0;
+}
+
+.titre {
+    font-weight: bold;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.priority-low    { color: green; }
+.priority-medium { color: goldenrod; }
+.priority-high   { color: red; }
+.en-cours        { color: orange; }
+
+.Tickets-table {
+    height: 100%;
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    border: #333;
+    border-width: 5px;
+    border-style: solid;
+}
+.Tickets-head {
+    border-collapse: collapse;
+    background-color: blue;
+    border-style: solid;
+    color: white;
+}
+
+.Tickets-ligne {
+    margin: 10px;
+    padding: 10px;
+    background-color: orange;
+    border-style: solid;
+    border-width: 2px;
+    transition: transform 160ms ease;
+}
+
+.Tickets-ligne td, .Tickets-head td,
+.Tickets-table th {
+    padding: 10px;
+    border-width: 2px;
+    border-style: solid;
+}
+
+.btn-staff {
+    display: inline-block;
+    padding: 8px 12px;
+    background: #6c6cff;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 12px;
+    max-width: 280px;
+    align-self: flex-end;
+}
+
+.btn-c {
+    display: inline-block;
+    padding: 8px 12px;
+    background: #c2c0c0;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-danger {
+    background: #ff6b6b;
+    color: #fff;
+    display: inline-block;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.textzone, .enter {
+    width: 100%;
+    max-width: 520px;
+    height: 36px;
+    font-size: 16px;
+    padding: 8px;
+    border-radius: 10px;
+    box-sizing: border-box;
+}
+.textzone {
+    border: 1px solid #ccc;
+}
+.enter {
+    color: white;
+    border: solid;
+    background-color: rgb(11, 76, 206);
+}
+
+.creation {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+    padding: 20px;
+    margin: 5px;
+}
+
+.admin-form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.card {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: solid;
+    border-radius: 20px;
+    padding: 20px;
+    background-color: white;
+    border-color: grey;
+    border-width: 1px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    max-width: 90%;
+}
+
+/* Toast notification */
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    background: rgba(46, 210, 14, 0.85);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    max-width: 90%;
+    text-align: center;
+}
+
+.show {
+    display: block;
+}
+
+/* Formulaires */
+.form-creation {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.form-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+.form-creation label {
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #222;
+}
+.form-creation .textzone {
+    padding: 10px;
+    border: 1px solid #d0d7de;
+    background: #fff;
+    border-radius: 8px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+.form-creation textarea.textzone {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.error-text {
+    font-size: 0.82rem;
+    color: #b23b2c;
+    background: #ffe7df;
+    border: 1px solid #f2c2b8;
+    padding: 6px 10px;
+    border-radius: 8px;
+}
+
+.titanic {
+    display: none;
+}
+
+/* ✅ CORRIGÉ pour Laravel : chemin depuis public/ */
+.background {
+    background-image: url("/assets/BackGround_login.png");
+    background-repeat: no-repeat;
+    background-size: cover;
+    margin: 0;
+    padding: 0;
+}
+
+.NewPswd-block {
+    display: none;
+}
+.NewPswd-block.show {
+    display: block;
+}
+
+.login.cache {
+    display: none;
+}
+
+.reset {
+    background: none;
+    border: none;
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Wrapper scrollable autour de chaque tableau */
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.table-wrapper .Tickets-table {
+    width: 100%;
+    min-width: 400px;
+}
+
+/* Cellules : texte long coupé proprement */
+.Tickets-table td,
+.Tickets-table th {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+/* Colonne Action */
+.force-status {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.force-status select {
+    min-width: 100px;
+}
+
+.left-panel, .right-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 10px;
+    overflow-y: auto;
+}
+
+/* ── Dashboard cards ── */
+.cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.card {
+    background-color: #f9f9f9;
+    padding: 20px 30px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+    min-width: 150px;
+    position: static;
+    transform: none;
+    top: auto;
+    left: auto;
+}
+
+.card-title {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.card-value {
+    margin: 0;
+    font-size: 32px;
+    font-weight: bold;
+    color: #333;
+}
