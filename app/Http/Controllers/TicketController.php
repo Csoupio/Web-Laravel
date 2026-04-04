@@ -24,7 +24,6 @@ class TicketController extends Controller
         return view('tickets.show', compact('ticket'));
     }
 
-    // Afficher le formulaire de création pour un projet donné
     public function create($projetId)
     {
         $projet = DB::table('projets')
@@ -55,6 +54,8 @@ class TicketController extends Controller
             'Priorité'     => $request->input('priority'),
             'Type'         => $request->input('type'),
             'Temps_Estime' => $request->input('estimated_time', 0),
+            'created_at'   => now(),
+            'updated_at'   => now(),
         ]);
 
         return redirect()->route('tickets.show', $newId);
@@ -63,5 +64,43 @@ class TicketController extends Controller
     public function addComment(Request $request, $id)
     {
         return redirect()->route('tickets.show', $id);
+    }
+
+    // ──────────────────────────────────────────────────────────
+    //  API — POST /api/v1/tickets
+    // ──────────────────────────────────────────────────────────
+    public function storeApi(Request $request)
+    {
+        $validated = $request->validate([
+            'title'          => 'required|string|max:255',
+            'project'        => 'required|integer|exists:projets,ID',
+            'description'    => 'nullable|string',
+            'priority'       => 'nullable|in:Haute,Moyenne,Basse',
+            'type'           => 'nullable|in:Bug,Évolution,Support',
+            'estimated_time' => 'nullable|numeric|min:0',
+        ]);
+
+        $newId = DB::table('ticket')->insertGetId([
+            'Nom'          => $validated['title'],
+            'Descritpion'  => $validated['description'] ?? null,
+            'IDProjet'     => $validated['project'],
+            'Status'       => 'Ouvert',
+            'Priorité'     => $validated['priority'] ?? null,
+            'Type'         => $validated['type'] ?? null,
+            'Temps_Estime' => $validated['estimated_time'] ?? 0,
+            'created_at'   => now(),
+            'updated_at'   => now(),
+        ]);
+
+        $ticket = DB::table('ticket')
+            ->join('projets', 'ticket.IDProjet', '=', 'projets.ID')
+            ->select('ticket.*', 'projets.Nom as projetNom')
+            ->where('ticket.ID', $newId)
+            ->first();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $ticket,
+        ], 201);
     }
 }
