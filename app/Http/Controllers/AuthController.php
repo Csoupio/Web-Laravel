@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -19,10 +20,9 @@ class AuthController extends Controller
 
         $user = DB::table('users')
                   ->where('email', $email)
-                  ->where('password', $password)
                   ->first();
 
-        if ($user) {
+        if ($user && Hash::check($password, $user->password)) {
             session(['user' => $user]);
             return redirect()->route('admin.index');
         }
@@ -45,9 +45,9 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         DB::table('users')->insert([
-            'Nom'      => $request->input('prenom') . ' ' . $request->input('nom'),
+            'name'     => $request->input('prenom') . ' ' . $request->input('nom'),
             'email'    => $request->input('email'),
-            'password' => $request->input('password'),
+            'password' => Hash::make($request->input('password')),
             'role'     => 'Client',
         ]);
 

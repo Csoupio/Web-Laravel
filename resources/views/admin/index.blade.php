@@ -5,42 +5,36 @@
 
 @section('content')
 
-{{-- Toast succès --}}
 @if(session('success'))
-    <div class="toast show">
-        Opération effectuée avec succès !
-    </div>
+    <div class="toast show">Opération effectuée avec succès !</div>
 @endif
 
-<div class="corp">
+@if(session('error'))
+    <div class="toast show" style="background:rgba(210,46,14,0.85);">{{ session('error') }}</div>
+@endif
 
-    {{-- ===== GESTION UTILISATEURS ===== --}}
-    <div class="tuile" id="users">
+<div class="corp" style="flex-wrap:wrap;">
+
+    {{-- ===== UTILISATEURS ===== --}}
+    <div class="tuile" id="users" style="flex: 1 1 400px;">
         <h3>Gérer les utilisateurs</h3>
 
         <form class="admin-form" action="{{ route('admin.users.store') }}" method="POST" id="formAdminUser">
             @csrf
-
             <label>Nom</label>
             <input class="textzone" type="text" placeholder="Prénom Nom"
                    id="adminUserPrenom" name="nom" value="{{ old('nom') }}">
-            <div id="adminUserPrenomError" class="error-text titanic">
-                Veuillez renseigner le nom de l'utilisateur.
-            </div>
+            <div id="adminUserPrenomError" class="error-text titanic">Veuillez renseigner le nom.</div>
 
             <label>Email</label>
             <input class="textzone" type="email" placeholder="utilisateur@exemple.com"
                    id="adminUserEmail" name="email" value="{{ old('email') }}">
-            <div id="adminUserEmailError" class="error-text titanic">
-                Veuillez renseigner un email valide.
-            </div>
+            <div id="adminUserEmailError" class="error-text titanic">Veuillez renseigner un email valide.</div>
 
             <label>Mot de passe</label>
             <input class="textzone" type="password" placeholder="Mot de passe"
                    id="adminUserPassword" name="password">
-            <div id="adminUserPasswordError" class="error-text titanic">
-                Veuillez renseigner un mot de passe.
-            </div>
+            <div id="adminUserPasswordError" class="error-text titanic">Veuillez renseigner un mot de passe.</div>
 
             <label>Rôle</label>
             <select id="adminUserRole" name="role" class="textzone">
@@ -51,7 +45,6 @@
 
             <div class="admin-actions" style="margin-top:10px;">
                 <button class="btn-add-comment" type="submit">Créer</button>
-                <button class="btn-danger" type="button">Supprimer</button>
             </div>
         </form>
 
@@ -61,10 +54,7 @@
             <table class="Tickets-table">
                 <thead class="Tickets-head">
                     <tr>
-                        <th>ID</th>
-                        <th>Nom</th>
-                        <th>Email</th>
-                        <th>Rôle</th>
+                        <th>ID</th><th>Nom</th><th>Email</th><th>Rôle</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -81,32 +71,24 @@
         </div>
     </div>
 
-    {{-- ===== GESTION CLIENTS ===== --}}
-    <div class="tuile" id="clients">
+    {{-- ===== CLIENTS ===== --}}
+    <div class="tuile" id="clients" style="flex: 1 1 400px;">
         <h3>Gérer les clients</h3>
 
         <form class="admin-form" action="{{ route('admin.clients.store') }}" method="POST" id="formAdminClient">
             @csrf
-
             <label>Nom du client</label>
             <input class="textzone" type="text" placeholder="Nom client"
                    name="nom_client" id="adminClientName" value="{{ old('nom_client') }}">
-            <div id="adminClientNameError" class="error-text titanic">
-                Veuillez renseigner le nom du client.
-            </div>
+            <div id="adminClientNameError" class="error-text titanic">Veuillez renseigner le nom.</div>
 
             <label>Contact (email)</label>
             <input class="textzone" type="email" placeholder="contact@client.com"
                    name="email_client" id="adminClientEmail" value="{{ old('email_client') }}">
-            <div id="adminClientEmailError" class="error-text titanic">
-                Veuillez renseigner un email valide.
-            </div>
-
-            <input type="hidden" name="client_id" id="adminClientId">
+            <div id="adminClientEmailError" class="error-text titanic">Veuillez renseigner un email.</div>
 
             <div class="admin-actions" style="margin-top:10px;">
                 <button class="btn-add-comment" type="submit">Ajouter</button>
-                <button class="btn-c" type="button" id="cancelEditClient">Annuler</button>
             </div>
         </form>
 
@@ -116,9 +98,7 @@
             <table class="Tickets-table">
                 <thead class="Tickets-head">
                     <tr>
-                        <th>ID</th>
-                        <th>Client</th>
-                        <th>Contact</th>
+                        <th>ID</th><th>Client</th><th>Email</th><th>Compte lié</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -127,6 +107,13 @@
                             <td>{{ $client['ID'] }}</td>
                             <td>{{ $client['Nom'] }}</td>
                             <td>{{ $client['email'] }}</td>
+                            <td>
+                                @if($client['user_id'])
+                                    <span style="color:green;">✓ Lié</span>
+                                @else
+                                    <span style="color:#aaa;">Non lié</span>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -134,19 +121,16 @@
         </div>
     </div>
 
-    {{-- ===== GESTION PROJETS ===== --}}
-    <div class="tuile" id="projects">
-        <h3>Créer / modifier projet</h3>
+    {{-- ===== PROJETS ===== --}}
+    <div class="tuile" id="projects" style="flex: 1 1 400px;">
+        <h3>Créer un projet</h3>
 
         <form class="admin-form" action="{{ route('admin.projets.store') }}" method="POST" id="formAdminProject">
             @csrf
-
             <label>Nom du projet</label>
             <input class="textzone" type="text" placeholder="Nom du projet"
                    name="nom_projet" id="adminProjectName" value="{{ old('nom_projet') }}">
-            <div id="adminProjectNameError" class="error-text titanic">
-                Veuillez renseigner le nom du projet.
-            </div>
+            <div id="adminProjectNameError" class="error-text titanic">Veuillez renseigner le nom.</div>
 
             <label>Client</label>
             <select id="ClientSelect" name="id_client" class="textzone">
@@ -159,13 +143,10 @@
             <textarea class="new-comment" rows="3" name="desc"
                       placeholder="Courte description"
                       id="adminProjectDescription">{{ old('desc') }}</textarea>
-            <div id="adminProjectDescriptionError" class="error-text titanic">
-                Veuillez renseigner une description.
-            </div>
+            <div id="adminProjectDescriptionError" class="error-text titanic">Veuillez renseigner une description.</div>
 
             <div class="admin-actions" style="margin-top:10px;">
                 <button class="btn-add-comment" type="submit">Créer</button>
-                <button class="btn-c" type="button">Annuler</button>
             </div>
         </form>
 
@@ -175,9 +156,7 @@
             <table class="Tickets-table">
                 <thead class="Tickets-head">
                     <tr>
-                        <th>ID</th>
-                        <th>Nom</th>
-                        <th>Client</th>
+                        <th>ID</th><th>Nom</th><th>Client</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -193,18 +172,62 @@
         </div>
     </div>
 
+    {{-- ===== ASSIGNATION COLLABORATEURS ===== --}}
+    <div class="tuile" id="assignations" style="flex: 1 1 400px;">
+        <h3>Assigner des collaborateurs aux projets</h3>
+
+        @if(count($collaborateurs) === 0)
+            <p style="color:#aaa; font-size:13px;">Aucun collaborateur créé pour l'instant.</p>
+        @else
+            @foreach($projets as $projet)
+                <div style="margin-bottom:20px; padding:12px; background:#fff; border-radius:8px; border:1px solid #e0e0e0;">
+                    <strong>{{ $projet['Nom'] }}</strong>
+                    <span style="color:#888; font-size:12px;"> — {{ $projet['ClientsNom'] }}</span>
+
+                    {{-- Collaborateurs déjà assignés --}}
+                    <div style="margin:8px 0; display:flex; flex-wrap:wrap; gap:6px;">
+                        @foreach($assignations[$projet['ID']] ?? [] as $collab)
+                            <span style="background:#e8e8ff; border-radius:20px; padding:4px 10px; font-size:13px; display:flex; align-items:center; gap:6px;">
+                                {{ $collab['name'] }}
+                                <form action="{{ route('admin.projets.collaborateurs.remove', [$projet['ID'], $collab['user_id']]) }}"
+                                      method="POST" style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                            style="background:none; border:none; color:red; cursor:pointer; font-size:14px; line-height:1;"
+                                            title="Retirer">✕</button>
+                                </form>
+                            </span>
+                        @endforeach
+                        @if(empty($assignations[$projet['ID']]))
+                            <span style="color:#aaa; font-size:12px;">Aucun collaborateur assigné</span>
+                        @endif
+                    </div>
+
+                    {{-- Formulaire d'ajout --}}
+                    <form action="{{ route('admin.projets.collaborateurs.assign', $projet['ID']) }}"
+                          method="POST" style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+                        @csrf
+                        <select name="user_id" class="textzone" style="height:36px; width:auto; flex:1;">
+                            @foreach($collaborateurs as $collab)
+                                <option value="{{ $collab['id'] }}">{{ $collab['name'] }}</option>
+                            @endforeach
+                        </select>
+                        <button class="btn-add-comment" type="submit">Assigner</button>
+                    </form>
+                </div>
+            @endforeach
+        @endif
+    </div>
+
     {{-- ===== TICKETS / FORCER STATUTS ===== --}}
-    <div class="tuile" id="tickets">
+    <div class="tuile" id="tickets" style="flex: 1 1 100%;">
         <h3>Tickets &amp; forcer statuts</h3>
         <div class="table-wrapper">
             <table class="Tickets-table">
                 <thead class="Tickets-head">
                     <tr>
-                        <th>ID</th>
-                        <th>Projet</th>
-                        <th>Nom</th>
-                        <th>Statut actuel</th>
-                        <th>Action</th>
+                        <th>ID</th><th>Projet</th><th>Nom</th><th>Statut actuel</th><th>Action</th>
                     </tr>
                 </thead>
                 <tbody>

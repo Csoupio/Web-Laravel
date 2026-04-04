@@ -1,22 +1,18 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
+// Cette migration est désormais inutile : la colonne 'role' est définie
+// directement dans 0001_01_01_000000_create_users_table.php
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('role')->default('Client');
-        });
+        // vide — role intégré dans la migration initiale
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('role');
-        });
+        // vide
     }
 };

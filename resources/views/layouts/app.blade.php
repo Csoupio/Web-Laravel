@@ -23,7 +23,18 @@
                 <button id="loginmenu" class="login" type="button">Votre Compte</button>
                 <div id="dropdownMenu" class="dropdown-content">
                     <a href="{{ route('projets.index') }}" class="menu-item">Mes projets</a>
-                    <a href="{{ route('admin.index') }}" class="menu-item">Espace administrateur</a>
+
+                    @php
+                        $sessionUser = session('user');
+                        $role = is_array($sessionUser)
+                            ? ($sessionUser['role'] ?? '')
+                            : ($sessionUser->role ?? '');
+                    @endphp
+
+                    @if($role === 'Administrateur')
+                        <a href="{{ route('admin.index') }}" class="menu-item">Espace administrateur</a>
+                    @endif
+
                     <a href="{{ route('dashboard') }}" class="menu-item">Dashboard</a>
                     <a href="{{ route('logout') }}" class="menu-item">Se déconnecter</a>
                 </div>
