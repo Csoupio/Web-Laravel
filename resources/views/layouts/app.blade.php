@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Ticketing')</title>
     <link rel="stylesheet" href="{{ asset('css/ticket-template.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/time-tracking.css') }}">
     @stack('styles')
 </head>
 <body class="@yield('body-class')">
@@ -23,18 +24,7 @@
                 <button id="loginmenu" class="login" type="button">Votre Compte</button>
                 <div id="dropdownMenu" class="dropdown-content">
                     <a href="{{ route('projets.index') }}" class="menu-item">Mes projets</a>
-
-                    @php
-                        $sessionUser = session('user');
-                        $role = is_array($sessionUser)
-                            ? ($sessionUser['role'] ?? '')
-                            : ($sessionUser->role ?? '');
-                    @endphp
-
-                    @if($role === 'Administrateur')
-                        <a href="{{ route('admin.index') }}" class="menu-item">Espace administrateur</a>
-                    @endif
-
+                    <a href="{{ route('admin.index') }}" class="menu-item">Espace administrateur</a>
                     <a href="{{ route('dashboard') }}" class="menu-item">Dashboard</a>
                     <a href="{{ route('logout') }}" class="menu-item">Se déconnecter</a>
                 </div>

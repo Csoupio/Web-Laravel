@@ -21,9 +21,25 @@ class TicketController extends Controller
 
         $ticket = (array) $ticket;
 
-        return view('tickets.show', compact('ticket'));
+        // ── Entrées de temps ──────────────────────────────────────────────
+        $timeEntries = DB::table('time_entries')
+            ->join('users', 'time_entries.IDUser', '=', 'users.id')
+            ->select('time_entries.*', 'users.name as userName')
+            ->where('time_entries.IDTicket', $id)
+            ->orderBy('time_entries.date', 'desc')
+            ->get()
+            ->map(fn($i) => (array) $i)
+            ->toArray();
+
+        $totalTemps      = array_sum(array_column($timeEntries, 'duree'));
+        $tempsFacturable = array_sum(
+            array_map(fn($e) => $e['facturable'] ? $e['duree'] : 0, $timeEntries)
+        );
+
+        return view('tickets.show', compact('ticket', 'timeEntries', 'totalTemps', 'tempsFacturable'));
     }
 
+    // Afficher le formulaire de création pour un projet donné
     public function create($projetId)
     {
         $projet = DB::table('projets')
@@ -54,8 +70,6 @@ class TicketController extends Controller
             'Priorité'     => $request->input('priority'),
             'Type'         => $request->input('type'),
             'Temps_Estime' => $request->input('estimated_time', 0),
-            'created_at'   => now(),
-            'updated_at'   => now(),
         ]);
 
         return redirect()->route('tickets.show', $newId);
@@ -64,43 +78,5 @@ class TicketController extends Controller
     public function addComment(Request $request, $id)
     {
         return redirect()->route('tickets.show', $id);
-    }
-
-    // ──────────────────────────────────────────────────────────
-    //  API — POST /api/v1/tickets
-    // ──────────────────────────────────────────────────────────
-    public function storeApi(Request $request)
-    {
-        $validated = $request->validate([
-            'title'          => 'required|string|max:255',
-            'project'        => 'required|integer|exists:projets,ID',
-            'description'    => 'nullable|string',
-            'priority'       => 'nullable|in:Haute,Moyenne,Basse',
-            'type'           => 'nullable|in:Bug,Évolution,Support',
-            'estimated_time' => 'nullable|numeric|min:0',
-        ]);
-
-        $newId = DB::table('ticket')->insertGetId([
-            'Nom'          => $validated['title'],
-            'Descritpion'  => $validated['description'] ?? null,
-            'IDProjet'     => $validated['project'],
-            'Status'       => 'Ouvert',
-            'Priorité'     => $validated['priority'] ?? null,
-            'Type'         => $validated['type'] ?? null,
-            'Temps_Estime' => $validated['estimated_time'] ?? 0,
-            'created_at'   => now(),
-            'updated_at'   => now(),
-        ]);
-
-        $ticket = DB::table('ticket')
-            ->join('projets', 'ticket.IDProjet', '=', 'projets.ID')
-            ->select('ticket.*', 'projets.Nom as projetNom')
-            ->where('ticket.ID', $newId)
-            ->first();
-
-        return response()->json([
-            'success' => true,
-            'data'    => $ticket,
-        ], 201);
     }
 }

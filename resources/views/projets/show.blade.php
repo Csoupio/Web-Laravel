@@ -6,6 +6,7 @@
 @section('content')
 <div class="corp">
 
+    {{-- Infos projet --}}
     <div class="left-panel">
         <div class="tuile">
             <p class="titre">{{ $projet['Nom'] }}</p>
@@ -15,13 +16,18 @@
             <p style="margin-top:12px;">{{ $projet['Description'] ?? 'Aucune description.' }}</p>
         </div>
 
+        {{-- Liste des tickets du projet --}}
         <div class="tuile">
             <h3>Tickets du projet</h3>
             <div class="table-wrapper">
                 <table class="Tickets-table">
                     <thead class="Tickets-head">
                         <tr>
-                            <th>ID</th><th>Nom</th><th>Statut</th><th>Priorité</th><th>Action</th>
+                            <th>ID</th>
+                            <th>Nom</th>
+                            <th>Statut</th>
+                            <th>Priorité</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -50,6 +56,7 @@
         </div>
     </div>
 
+    {{-- Panneau droit --}}
     <div class="right-panel">
         <div class="tuile">
             <p class="titre">Informations</p>
@@ -57,33 +64,27 @@
             <p><strong>Client :</strong> {{ $projet['clientNom'] }}</p>
             <p><strong>Tickets :</strong> {{ count($tickets) }}</p>
         </div>
-
         <div class="collaborateur tuile">
             <p class="titre">Collaborateurs :</p>
             <div class="avatar-stack">
-                @forelse($collaborateurs as $collab)
-                    <div class="avatar" title="{{ $collab['name'] }}">
-                        {{ strtoupper(substr($collab['name'], 0, 1)) }}
-                    </div>
-                @empty
-                    <span style="color:#aaa; font-size:13px;">Aucun collaborateur assigné.</span>
-                @endforelse
+                <div class="avatar" title="?">?</div>
             </div>
         </div>
 
-        @php
-            $sessionUser = session('user');
-            $role = is_array($sessionUser) ? ($sessionUser['role'] ?? '') : ($sessionUser->role ?? '');
-        @endphp
-
-        {{-- Seuls admin et collaborateurs peuvent créer des tickets --}}
-        @if($role !== 'Client')
-            <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
-                <a href="{{ route('tickets.create', $projet['ID']) }}">
-                    <button type="button" class="btn-add-comment">+ Nouveau ticket</button>
-                </a>
-            </div>
-        @endif
+        {{-- Actions --}}
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:12px;">
+            <a href="{{ route('tickets.create', $projet['ID']) }}">
+                <button type="button" class="btn-add-comment" style="width:100%;">
+                    + Nouveau ticket
+                </button>
+            </a>
+            <a href="{{ route('projets.time-report', $projet['ID']) }}">
+                <button type="button" class="btn-add-comment"
+                        style="width:100%; background:#22c55e;">
+                    📊 Rapport temps & facturation
+                </button>
+            </a>
+        </div>
 
         <a href="{{ route('projets.index') }}">
             <button type="button" class="btn-staff">← Retour aux projets</button>
