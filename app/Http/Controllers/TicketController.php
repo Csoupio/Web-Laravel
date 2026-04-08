@@ -9,6 +9,10 @@ class TicketController extends Controller
 {
     public function show($id)
     {
+        $sessionUser = session('user');
+        $userId      = is_array($sessionUser) ? $sessionUser['id'] : $sessionUser->id;
+        $role        = is_array($sessionUser) ? $sessionUser['role'] : $sessionUser->role;
+
         $ticket = DB::table('ticket')
                     ->join('projets', 'ticket.IDProjet', '=', 'projets.ID')
                     ->select('ticket.*', 'projets.Nom as projetNom')
@@ -17,6 +21,21 @@ class TicketController extends Controller
 
         if (!$ticket) {
             abort(404, 'Ticket introuvable.');
+        }
+
+        // Vérification des droits d'accès
+        if ($role === 'Collaborateur') {
+            $hasAccess = DB::table('projet_user')
+                ->where('projet_id', $ticket->IDProjet)
+                ->where('user_id', $userId)
+                ->exists();
+            if (!$hasAccess) abort(403, 'Accès refusé.');
+        } elseif ($role === 'Client') {
+            $hasAccess = DB::table('clients')
+                ->where('ID', $ticket->IDProjet)
+                ->where('user_id', $userId)
+                ->exists();
+            if (!$hasAccess) abort(403, 'Accès refusé.');
         }
 
         $ticket = (array) $ticket;
@@ -36,7 +55,7 @@ class TicketController extends Controller
             array_map(fn($e) => $e['facturable'] ? $e['duree'] : 0, $timeEntries)
         );
 
-        return view('tickets.show', compact('ticket', 'timeEntries', 'totalTemps', 'tempsFacturable'));
+        return view('tickets.show', compact('ticket', 'timeEntries', 'totalTemps', 'tempsFacturable', 'role'));
     }
 
     // Afficher le formulaire de création pour un projet donné

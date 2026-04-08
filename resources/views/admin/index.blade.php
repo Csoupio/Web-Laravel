@@ -54,7 +54,7 @@
             <table class="Tickets-table">
                 <thead class="Tickets-head">
                     <tr>
-                        <th>ID</th><th>Nom</th><th>Email</th><th>Rôle</th>
+                        <th>ID</th><th>Nom</th><th>Email</th><th>Rôle</th><th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -64,6 +64,13 @@
                             <td>{{ $u['name'] }}</td>
                             <td>{{ $u['email'] }}</td>
                             <td>{{ $u['role'] }}</td>
+                            <td>
+                                <form action="{{ route('admin.users.destroy', $u['id']) }}" method="POST"
+                                      onsubmit="return confirm('Supprimer l\'utilisateur {{ $u['name'] }} ? Ses entrées de temps seront aussi supprimées.')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn-danger" style="padding:4px 8px; font-size:12px;">Supprimer</button>
+                                </form>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -98,7 +105,7 @@
             <table class="Tickets-table">
                 <thead class="Tickets-head">
                     <tr>
-                        <th>ID</th><th>Client</th><th>Email</th><th>Compte lié</th>
+                        <th>ID</th><th>Client</th><th>Email</th><th>Compte lié</th><th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -113,6 +120,13 @@
                                 @else
                                     <span style="color:#aaa;">Non lié</span>
                                 @endif
+                            </td>
+                            <td>
+                                <form action="{{ route('admin.clients.destroy', $client['ID']) }}" method="POST"
+                                      onsubmit="return confirm('Supprimer le client {{ $client['Nom'] }} ? Tous ses projets et tickets seront aussi supprimés.')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn-danger" style="padding:4px 8px; font-size:12px;">Supprimer</button>
+                                </form>
                             </td>
                         </tr>
                     @endforeach
@@ -156,7 +170,7 @@
             <table class="Tickets-table">
                 <thead class="Tickets-head">
                     <tr>
-                        <th>ID</th><th>Nom</th><th>Client</th>
+                        <th>ID</th><th>Nom</th><th>Client</th><th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -165,6 +179,13 @@
                             <td>{{ $projet['ID'] }}</td>
                             <td>{{ $projet['Nom'] }}</td>
                             <td>{{ $projet['ClientsNom'] }}</td>
+                            <td>
+                                <form action="{{ route('admin.projets.destroy', $projet['ID']) }}" method="POST"
+                                      onsubmit="return confirm('Supprimer le projet {{ $projet['Nom'] }} ? Tous ses tickets seront aussi supprimés.')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn-danger" style="padding:4px 8px; font-size:12px;">Supprimer</button>
+                                </form>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -227,7 +248,7 @@
             <table class="Tickets-table">
                 <thead class="Tickets-head">
                     <tr>
-                        <th>ID</th><th>Projet</th><th>Nom</th><th>Statut actuel</th><th>Action</th>
+                        <th>ID</th><th>Projet</th><th>Nom</th><th>Statut actuel</th><th>Action</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -250,6 +271,13 @@
                                         <option value="Bloqué"   @selected($ticket['Status'] === 'Bloqué')>Bloqué</option>
                                     </select>
                                     <button class="btn-add-comment" type="submit">Forcer</button>
+                                </form>
+                            </td>
+                            <td>
+                                <form action="{{ route('admin.tickets.destroy', $ticket['ID']) }}" method="POST"
+                                      onsubmit="return confirm('Supprimer le ticket #{{ $ticket['ID'] }} ?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn-danger" style="padding:4px 8px; font-size:12px;">Supprimer</button>
                                 </form>
                             </td>
                         </tr>

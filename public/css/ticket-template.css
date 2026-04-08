@@ -59,7 +59,7 @@ body {
     margin: 0;
     font-family: Arial, sans-serif;
     box-sizing: border-box;
-    height: 85vh;
+    min-height: 100vh;
 }
 
 .corp {
@@ -69,7 +69,7 @@ body {
     padding: 15px;
     width: 100%;
     box-sizing: border-box;
-    height: 100%;
+    min-height: calc(100vh - 80px);
 }
 
 .tuile {
@@ -85,7 +85,7 @@ body {
     flex-direction: column;
     align-items: stretch;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .tuile:hover {
@@ -396,12 +396,23 @@ body {
     min-width: 100px;
 }
 
-.left-panel, .right-panel {
+.left-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 3;
+    gap: 10px;
+    overflow-y: auto;
+    min-width: 0;
+}
+
+.right-panel {
     display: flex;
     flex-direction: column;
     flex: 1;
     gap: 10px;
     overflow-y: auto;
+    min-width: 220px;
+    max-width: 320px;
 }
 
 /* ── Dashboard cards ── */

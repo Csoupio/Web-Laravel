@@ -39,3 +39,21 @@
 /* details/summary styling */
 details > summary { list-style: none; }
 details > summary::-webkit-details-marker { display: none; }
+
+/* ── Badges mode facturation ────────────────────────────────────────────── */
+
+.fact-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 6px;
+    margin-bottom: 4px;
+}
+
+.fact-badge--inclus     { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.fact-badge--facturable { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+.fact-badge--attente    { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+.fact-badge--accepte    { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.fact-badge--refuse     { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
