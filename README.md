@@ -89,5 +89,3 @@ Le système est livré avec un jeu de données complet via le `seed`. Voici les 
 - `resources/views/` : Vues Blade organisées par modules (auth, client, admin, ticket).
 - `public/css/` : Design system centralisé (home.css, auth.css, etc.).
 
----
-*Projet réalisé dans le cadre d'un cours de développement web sur les standards de production Laravel.*
