@@ -29,4 +29,20 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function projets()
+    {
+        return $this->belongsToMany(Projet::class, 'projet_user', 'user_id', 'projet_id');
+    }
+
+    public function client()
+    {
+        return $this->hasOne(Client::class, 'user_id');
+    }
+
+    public function timeEntries()
+    {
+        return $this->hasMany(TimeEntry::class, 'user_id', 'id');
+    }
 }
+

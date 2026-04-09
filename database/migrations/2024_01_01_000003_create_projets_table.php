@@ -9,13 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('projets', function (Blueprint $table) {
-            $table->id('ID');
-            $table->string('Nom');
-            $table->unsignedBigInteger('ClientsID');
-            $table->text('Description')->nullable();
+            $table->id();
+            $table->string('nom');
+            $table->foreignId('client_id')->constrained('clients')->onDelete('cascade');
+            $table->text('description')->nullable();
+            $table->float('contrat_heures')->default(0);
             $table->timestamps();
-
-            $table->foreign('ClientsID')->references('ID')->on('clients')->onDelete('cascade');
         });
     }
 

@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Ticket;
+use App\Models\Projet;
+use App\Models\TimeEntry;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class FacturationController extends Controller
@@ -19,12 +23,13 @@ class FacturationController extends Controller
             return back()->with('error', 'Mode de facturation invalide.');
         }
 
-        DB::table('ticket')->where('ID', $ticketId)->update([
+        $ticket = Ticket::findOrFail($ticketId);
+        $ticket->update([
             'mode_facturation' => $mode,
             'facturable_auto'  => false,
             // Si on repasse en inclus, on annule la validation éventuelle
-            'validation_client'  => $mode === 'inclus' ? null : DB::raw('validation_client'),
-            'commentaire_refus'  => $mode === 'inclus' ? null : DB::raw('commentaire_refus'),
+            'validation_client'  => $mode === 'inclus' ? null : $ticket->validation_client,
+            'commentaire_refus'  => $mode === 'inclus' ? null : $ticket->commentaire_refus,
         ]);
 
         return back()->with('success_fact', 'Mode de facturation mis à jour.');
@@ -36,28 +41,26 @@ class FacturationController extends Controller
     // ─────────────────────────────────────────────────────────────────────────
     public static function checkAndSwitchAuto(int $projetId): void
     {
-        $projet = DB::table('projets')->where('ID', $projetId)->first();
+        $projet = Projet::find($projetId);
 
         if (!$projet || $projet->contrat_heures <= 0) {
             return; // Pas de contrat défini, rien à faire
         }
 
         // Heures consommées sur les tickets INCLUS du projet
-        $heuresConsommees = DB::table('time_entries')
-            ->join('ticket', 'time_entries.IDTicket', '=', 'ticket.ID')
-            ->where('ticket.IDProjet', $projetId)
-            ->where('ticket.mode_facturation', 'inclus')
-            ->sum('time_entries.duree');
+        $heuresConsommees = TimeEntry::whereHas('ticket', function($q) use ($projetId) {
+            $q->where('projet_id', $projetId)
+              ->where('mode_facturation', 'inclus');
+        })->sum('duree');
 
         if ($heuresConsommees < $projet->contrat_heures) {
             return; // Contrat pas encore épuisé
         }
 
         // Le contrat est épuisé : passe tous les tickets ouverts/en cours en facturable auto
-        DB::table('ticket')
-            ->where('IDProjet', $projetId)
+        Ticket::where('projet_id', $projetId)
             ->where('mode_facturation', 'inclus')
-            ->whereIn('Status', ['Ouvert', 'En cours'])
+            ->whereIn('statut', ['Ouvert', 'En cours'])
             ->update([
                 'mode_facturation' => 'facturable',
                 'facturable_auto'  => true,
@@ -69,15 +72,23 @@ class FacturationController extends Controller
     // ─────────────────────────────────────────────────────────────────────────
     public function soumettre($ticketId)
     {
-        $ticket = DB::table('ticket')->where('ID', $ticketId)->first();
+        $user = Auth::user();
+        if (!$user) return redirect()->route('login');
+        
+        if (!in_array($user->role, ['Collaborateur', 'Administrateur'])) {
+            return back()->with('error', 'Action non autorisée.');
+        }
 
-        if (!$ticket || $ticket->mode_facturation !== 'facturable') {
+        $ticket = Ticket::findOrFail($ticketId);
+
+        if ($ticket->mode_facturation !== 'facturable') {
             return back()->with('error', 'Ce ticket n\'est pas facturable.');
         }
 
-        DB::table('ticket')->where('ID', $ticketId)->update([
+        $ticket->update([
             'validation_client' => 'en_attente',
             'commentaire_refus' => null,
+            'statut'            => 'En attente de validation',
         ]);
 
         return back()->with('success_fact', 'Ticket soumis à la validation client.');
@@ -88,15 +99,28 @@ class FacturationController extends Controller
     // ─────────────────────────────────────────────────────────────────────────
     public function accepter($ticketId)
     {
-        $ticket = DB::table('ticket')->where('ID', $ticketId)->first();
+        $user = Auth::user();
+        if (!$user) return redirect()->route('login');
 
-        if (!$ticket || $ticket->validation_client !== 'en_attente') {
+        if ($user->role !== 'Client') {
+            return back()->with('error', 'Seul le client peut valider la facturation.');
+        }
+
+        $ticket = Ticket::findOrFail($ticketId);
+
+        if ($ticket->validation_client !== 'en_attente') {
             return back()->with('error', 'Ce ticket n\'est pas en attente de validation.');
         }
 
-        DB::table('ticket')->where('ID', $ticketId)->update([
+        // Vérifier que le client a accès à ce ticket
+        if (!$this->clientOwnsTicket($user, $ticket->projet_id)) {
+            abort(403, 'Vous n\'avez pas accès à ce ticket.');
+        }
+
+        $ticket->update([
             'validation_client' => 'accepte',
             'commentaire_refus' => null,
+            'statut'            => 'Facturation acceptée',
         ]);
 
         return back()->with('success_fact', 'Facturation acceptée.');
@@ -107,22 +131,31 @@ class FacturationController extends Controller
     // ─────────────────────────────────────────────────────────────────────────
     public function refuser(Request $request, $ticketId)
     {
-        $ticket = DB::table('ticket')->where('ID', $ticketId)->first();
+        $user = Auth::user();
+        if (!$user) return redirect()->route('login');
 
-        if (!$ticket || $ticket->validation_client !== 'en_attente') {
+        if ($user->role !== 'Client') {
+            return back()->with('error', 'Seul le client peut refuser la facturation.');
+        }
+
+        $ticket = Ticket::findOrFail($ticketId);
+
+        if ($ticket->validation_client !== 'en_attente') {
             return back()->with('error', 'Ce ticket n\'est pas en attente de validation.');
         }
 
-        DB::table('ticket')->where('ID', $ticketId)->update([
+        // Vérifier que le client a accès à ce ticket
+        if (!$this->clientOwnsTicket($user, $ticket->projet_id)) {
+            abort(403, 'Vous n\'avez pas accès à ce ticket.');
+        }
+
+        $ticket->update([
             'validation_client' => 'refuse',
             'commentaire_refus' => $request->input('commentaire_refus'),
-            // Repasse en inclus pour être retraité
-            'mode_facturation'  => 'inclus',
-            'facturable_auto'   => false,
-            'Status'            => 'En cours',
+            'statut'            => 'Refusé par client',
         ]);
 
-        return back()->with('success_fact', 'Facturation refusée. Le ticket est repassé en cours.');
+        return back()->with('success_fact', 'Facturation refusée. Le ticket est repassé en statut « Refusé par client ».');
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -130,46 +163,79 @@ class FacturationController extends Controller
     // ─────────────────────────────────────────────────────────────────────────
     public function validationIndex()
     {
-        $tickets = DB::table('ticket')
-            ->join('projets', 'ticket.IDProjet', '=', 'projets.ID')
-            ->select('ticket.*', 'projets.Nom as projetNom')
-            ->where('ticket.mode_facturation', 'facturable')
-            ->whereIn('ticket.validation_client', ['en_attente', 'accepte', 'refuse'])
-            ->orderByRaw("CASE ticket.validation_client WHEN 'en_attente' THEN 1 WHEN 'refuse' THEN 2 WHEN 'accepte' THEN 3 END")
-            ->get()->map(fn($i) => (array) $i)->toArray();
+        $user = Auth::user();
+        if (!$user) return redirect()->route('login');
 
-        return view('tickets.validation-index', compact('tickets'));
+        $query = Ticket::with('projet')
+            ->whereIn('validation_client', ['en_attente', 'accepte', 'refuse']);
+
+        // Le client ne voit que ses propres tickets
+        if ($user->role === 'Client') {
+            $client = $user->client;
+            if (!$client) {
+                return view('tickets.validation-index', ['tickets' => [], 'role' => $user->role]);
+            }
+            $query->whereHas('projet', function($q) use ($client) {
+                $q->where('client_id', $client->id);
+            });
+        }
+
+        $tickets = $query
+            ->orderByRaw("CASE validation_client WHEN 'en_attente' THEN 1 WHEN 'refuse' THEN 2 WHEN 'accepte' THEN 3 END")
+            ->get()->map(function($t) {
+                $arr = $t->toArray();
+                $arr['projetNom'] = $t->projet->nom ?? 'N/A';
+                return $arr;
+            })->toArray();
+
+        return view('tickets.validation-index', [
+            'tickets' => $tickets,
+            'role' => $user->role
+        ]);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // PAGE : détail d'un ticket pour le client (lecture + boutons valider/refuser)
+    // PAGE : détail d'un ticket pour le client
     // ─────────────────────────────────────────────────────────────────────────
     public function validationShow($ticketId)
     {
-        $ticket = DB::table('ticket')
-            ->join('projets', 'ticket.IDProjet', '=', 'projets.ID')
-            ->select('ticket.*', 'projets.Nom as projetNom')
-            ->where('ticket.ID', $ticketId)
-            ->first();
+        $user = Auth::user();
+        if (!$user) return redirect()->route('login');
+
+        $ticket = Ticket::with(['projet', 'timeEntries.user'])->find($ticketId);
 
         if (!$ticket) abort(404);
-        $ticket = (array) $ticket;
 
-        // Entrées de temps du ticket
-        $timeEntries = DB::table('time_entries')
-            ->join('users', 'time_entries.IDUser', '=', 'users.id')
-            ->select('time_entries.*', 'users.name as userName')
-            ->where('time_entries.IDTicket', $ticketId)
-            ->orderBy('time_entries.date', 'desc')
-            ->get()->map(fn($i) => (array) $i)->toArray();
+        // Vérifier l'accès
+        if ($user->role === 'Client' && !$this->clientOwnsTicket($user, $ticket->projet_id)) {
+            abort(403, 'Vous n\'avez pas accès à ce ticket.');
+        }
 
-        $totalTemps      = array_sum(array_column($timeEntries, 'duree'));
-        $tempsFacturable = array_sum(
-            array_map(fn($e) => $e['facturable'] ? $e['duree'] : 0, $timeEntries)
-        );
+        $timeEntries = $ticket->timeEntries;
+        $totalTemps      = $timeEntries->sum('duree');
+        $tempsFacturable = $timeEntries->where('facturable', true)->sum('duree');
 
-        return view('tickets.validation-show', compact(
-            'ticket', 'timeEntries', 'totalTemps', 'tempsFacturable'
-        ));
+        // On convertit pour la vue
+        $ticketArr = $ticket->toArray();
+        $ticketArr['projetNom'] = $ticket->projet->nom ?? 'N/A';
+
+        return view('tickets.validation-show', [
+            'ticket' => $ticketArr,
+            'timeEntries' => $timeEntries,
+            'totalTemps' => $totalTemps,
+            'tempsFacturable' => $tempsFacturable,
+            'role' => $user->role
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Utilitaire : vérifie qu'un user (client) possède le projet du ticket
+    // ─────────────────────────────────────────────────────────────────────────
+    private function clientOwnsTicket($user, int $projetId): bool
+    {
+        $client = $user->client;
+        if (!$client) return false;
+        
+        return $client->projets()->where('id', $projetId)->exists();
     }
 }

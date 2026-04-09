@@ -3,6 +3,10 @@
 @section('title', 'Espace administrateur')
 @section('header-title', 'Espace administrateur')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
+@endpush
+
 @section('content')
 
 @if(session('success'))
@@ -10,65 +14,64 @@
 @endif
 
 @if(session('error'))
-    <div class="toast show" style="background:rgba(210,46,14,0.85);">{{ session('error') }}</div>
+    <div class="toast show" style="background:#dc2626;">{{ session('error') }}</div>
 @endif
 
-<div class="corp" style="flex-wrap:wrap;">
+<div class="corp flex-gap-10">
 
     {{-- ===== UTILISATEURS ===== --}}
     <div class="tuile" id="users" style="flex: 1 1 400px;">
-        <h3>Gérer les utilisateurs</h3>
+        <p class="titre">Gestion des utilisateurs</p>
 
-        <form class="admin-form" action="{{ route('admin.users.store') }}" method="POST" id="formAdminUser">
+        <form class="form-creation" action="{{ route('admin.users.store') }}" method="POST" id="formAdminUser">
             @csrf
-            <label>Nom</label>
-            <input class="textzone" type="text" placeholder="Prénom Nom"
-                   id="adminUserPrenom" name="nom" value="{{ old('nom') }}">
-            <div id="adminUserPrenomError" class="error-text titanic">Veuillez renseigner le nom.</div>
-
-            <label>Email</label>
-            <input class="textzone" type="email" placeholder="utilisateur@exemple.com"
-                   id="adminUserEmail" name="email" value="{{ old('email') }}">
-            <div id="adminUserEmailError" class="error-text titanic">Veuillez renseigner un email valide.</div>
-
-            <label>Mot de passe</label>
-            <input class="textzone" type="password" placeholder="Mot de passe"
-                   id="adminUserPassword" name="password">
-            <div id="adminUserPasswordError" class="error-text titanic">Veuillez renseigner un mot de passe.</div>
-
-            <label>Rôle</label>
-            <select id="adminUserRole" name="role" class="textzone">
-                <option value="Client">Client</option>
-                <option value="Collaborateur">Collaborateur</option>
-                <option value="Administrateur">Administrateur</option>
-            </select>
-
-            <div class="admin-actions" style="margin-top:10px;">
-                <button class="btn-add-comment" type="submit">Créer</button>
+            <div class="form-group">
+                <label>Nom Complet</label>
+                <input class="textzone w-full" type="text" placeholder="Prénom Nom" id="adminUserPrenom" name="nom" value="{{ old('nom') }}">
+                <div id="adminUserPrenomError" class="error-text titanic">Veuillez renseigner le nom.</div>
             </div>
+
+            <div class="form-group">
+                <label>Email professionnel</label>
+                <input class="textzone w-full" type="email" placeholder="utilisateur@exemple.com" id="adminUserEmail" name="email" value="{{ old('email') }}">
+                <div id="adminUserEmailError" class="error-text titanic">Veuillez renseigner un email valide.</div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-col">
+                    <label>Mot de passe</label>
+                    <input class="textzone w-full" type="password" placeholder="Mot de passe" id="adminUserPassword" name="password">
+                </div>
+                <div class="form-col">
+                    <label>Rôle</label>
+                    <select id="adminUserRole" name="role" class="textzone w-full">
+                        <option value="Client">Client</option>
+                        <option value="Collaborateur">Collaborateur</option>
+                        <option value="Administrateur">Administrateur</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-add-comment w-full mt-10" type="submit">Créer l'utilisateur</button>
         </form>
 
-        <hr>
-        <h4>Liste utilisateurs</h4>
+        <hr class="mt-10 mb-12">
+        
         <div class="table-wrapper">
-            <table class="Tickets-table">
+            <table class="Tickets-table admin-table">
                 <thead class="Tickets-head">
-                    <tr>
-                        <th>ID</th><th>Nom</th><th>Email</th><th>Rôle</th><th>Action</th>
-                    </tr>
+                    <tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Action</th></tr>
                 </thead>
                 <tbody>
                     @foreach($users as $u)
                         <tr>
-                            <td>{{ $u['id'] }}</td>
                             <td>{{ $u['name'] }}</td>
                             <td>{{ $u['email'] }}</td>
-                            <td>{{ $u['role'] }}</td>
+                            <td><span class="badge badge--role">{{ $u['role'] }}</span></td>
                             <td>
-                                <form action="{{ route('admin.users.destroy', $u['id']) }}" method="POST"
-                                      onsubmit="return confirm('Supprimer l\'utilisateur {{ $u['name'] }} ? Ses entrées de temps seront aussi supprimées.')">
+                                <form action="{{ route('admin.users.destroy', $u['id']) }}" method="POST" data-confirm="Supprimer l'utilisateur {{ $u['name'] }} ? Ses entrées de temps seront aussi supprimées.">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="btn-danger" style="padding:4px 8px; font-size:12px;">Supprimer</button>
+                                    <button type="submit" class="btn-danger small">Suppr.</button>
                                 </form>
                             </td>
                         </tr>
@@ -80,52 +83,39 @@
 
     {{-- ===== CLIENTS ===== --}}
     <div class="tuile" id="clients" style="flex: 1 1 400px;">
-        <h3>Gérer les clients</h3>
+        <p class="titre">Gestion des clients</p>
 
-        <form class="admin-form" action="{{ route('admin.clients.store') }}" method="POST" id="formAdminClient">
+        <form class="form-creation" action="{{ route('admin.clients.store') }}" method="POST" id="formAdminClient">
             @csrf
-            <label>Nom du client</label>
-            <input class="textzone" type="text" placeholder="Nom client"
-                   name="nom_client" id="adminClientName" value="{{ old('nom_client') }}">
-            <div id="adminClientNameError" class="error-text titanic">Veuillez renseigner le nom.</div>
-
-            <label>Contact (email)</label>
-            <input class="textzone" type="email" placeholder="contact@client.com"
-                   name="email_client" id="adminClientEmail" value="{{ old('email_client') }}">
-            <div id="adminClientEmailError" class="error-text titanic">Veuillez renseigner un email.</div>
-
-            <div class="admin-actions" style="margin-top:10px;">
-                <button class="btn-add-comment" type="submit">Ajouter</button>
+            <div class="form-group">
+                <label>Raison sociale</label>
+                <input class="textzone w-full" type="text" placeholder="Nom du client" name="nom_client" id="adminClientName" value="{{ old('nom_client') }}">
             </div>
+
+            <div class="form-group">
+                <label>Email de contact</label>
+                <input class="textzone w-full" type="email" placeholder="contact@client.com" name="email_client" id="adminClientEmail" value="{{ old('email_client') }}">
+            </div>
+
+            <button class="btn-add-comment w-full mt-10" type="submit">Ajouter le client</button>
         </form>
 
-        <hr>
-        <h4>Liste clients</h4>
+        <hr class="mt-10 mb-12">
+
         <div class="table-wrapper">
-            <table class="Tickets-table">
+            <table class="Tickets-table admin-table">
                 <thead class="Tickets-head">
-                    <tr>
-                        <th>ID</th><th>Client</th><th>Email</th><th>Compte lié</th><th>Action</th>
-                    </tr>
+                    <tr><th>Client</th><th>Email</th><th>Action</th></tr>
                 </thead>
                 <tbody>
                     @foreach($clients as $client)
                         <tr>
-                            <td>{{ $client['ID'] }}</td>
-                            <td>{{ $client['Nom'] }}</td>
+                            <td>{{ $client['nom'] }}</td>
                             <td>{{ $client['email'] }}</td>
                             <td>
-                                @if($client['user_id'])
-                                    <span style="color:green;">✓ Lié</span>
-                                @else
-                                    <span style="color:#aaa;">Non lié</span>
-                                @endif
-                            </td>
-                            <td>
-                                <form action="{{ route('admin.clients.destroy', $client['ID']) }}" method="POST"
-                                      onsubmit="return confirm('Supprimer le client {{ $client['Nom'] }} ? Tous ses projets et tickets seront aussi supprimés.')">
+                                <form action="{{ route('admin.clients.destroy', $client['id']) }}" method="POST" data-confirm="Supprimer le client {{ $client['nom'] }} ?">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="btn-danger" style="padding:4px 8px; font-size:12px;">Supprimer</button>
+                                    <button type="submit" class="btn-danger small">Suppr.</button>
                                 </form>
                             </td>
                         </tr>
@@ -137,147 +127,99 @@
 
     {{-- ===== PROJETS ===== --}}
     <div class="tuile" id="projects" style="flex: 1 1 400px;">
-        <h3>Créer un projet</h3>
+        <p class="titre">Projets & Assignations</p>
 
-        <form class="admin-form" action="{{ route('admin.projets.store') }}" method="POST" id="formAdminProject">
+        <form class="form-creation" action="{{ route('admin.projets.store') }}" method="POST" id="formAdminProject">
             @csrf
-            <label>Nom du projet</label>
-            <input class="textzone" type="text" placeholder="Nom du projet"
-                   name="nom_projet" id="adminProjectName" value="{{ old('nom_projet') }}">
-            <div id="adminProjectNameError" class="error-text titanic">Veuillez renseigner le nom.</div>
-
-            <label>Client</label>
-            <select id="ClientSelect" name="id_client" class="textzone">
-                @foreach($clients as $client)
-                    <option value="{{ $client['ID'] }}">{{ $client['Nom'] }}</option>
-                @endforeach
-            </select>
-
-            <label>Description</label>
-            <textarea class="new-comment" rows="3" name="desc"
-                      placeholder="Courte description"
-                      id="adminProjectDescription">{{ old('desc') }}</textarea>
-            <div id="adminProjectDescriptionError" class="error-text titanic">Veuillez renseigner une description.</div>
-
-            <div class="admin-actions" style="margin-top:10px;">
-                <button class="btn-add-comment" type="submit">Créer</button>
+            <div class="form-row">
+                <div class="form-col">
+                    <label>Nom du projet</label>
+                    <input class="textzone w-full" type="text" name="nom_projet" id="adminProjectName">
+                </div>
+                <div class="form-col">
+                    <label>Client</label>
+                    <select id="ClientSelect" name="id_client" class="textzone w-full">
+                        @foreach($clients as $client)
+                            <option value="{{ $client['id'] }}">{{ $client['nom'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
+            <button class="btn-add-comment w-full mt-10" type="submit">Créer projet</button>
         </form>
 
-        <hr>
-        <h4>Liste des projets</h4>
-        <div class="table-wrapper">
-            <table class="Tickets-table">
-                <thead class="Tickets-head">
-                    <tr>
-                        <th>ID</th><th>Nom</th><th>Client</th><th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($projets as $projet)
-                        <tr>
-                            <td>{{ $projet['ID'] }}</td>
-                            <td>{{ $projet['Nom'] }}</td>
-                            <td>{{ $projet['ClientsNom'] }}</td>
-                            <td>
-                                <form action="{{ route('admin.projets.destroy', $projet['ID']) }}" method="POST"
-                                      onsubmit="return confirm('Supprimer le projet {{ $projet['Nom'] }} ? Tous ses tickets seront aussi supprimés.')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn-danger" style="padding:4px 8px; font-size:12px;">Supprimer</button>
-                                </form>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
+        <hr class="mt-10 mb-12">
 
-    {{-- ===== ASSIGNATION COLLABORATEURS ===== --}}
-    <div class="tuile" id="assignations" style="flex: 1 1 400px;">
-        <h3>Assigner des collaborateurs aux projets</h3>
-
-        @if(count($collaborateurs) === 0)
-            <p style="color:#aaa; font-size:13px;">Aucun collaborateur créé pour l'instant.</p>
-        @else
-            @foreach($projets as $projet)
-                <div style="margin-bottom:20px; padding:12px; background:#fff; border-radius:8px; border:1px solid #e0e0e0;">
-                    <strong>{{ $projet['Nom'] }}</strong>
-                    <span style="color:#888; font-size:12px;"> — {{ $projet['ClientsNom'] }}</span>
-
-                    {{-- Collaborateurs déjà assignés --}}
-                    <div style="margin:8px 0; display:flex; flex-wrap:wrap; gap:6px;">
-                        @foreach($assignations[$projet['ID']] ?? [] as $collab)
-                            <span style="background:#e8e8ff; border-radius:20px; padding:4px 10px; font-size:13px; display:flex; align-items:center; gap:6px;">
-                                {{ $collab['name'] }}
-                                <form action="{{ route('admin.projets.collaborateurs.remove', [$projet['ID'], $collab['user_id']]) }}"
-                                      method="POST" style="display:inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                            style="background:none; border:none; color:red; cursor:pointer; font-size:14px; line-height:1;"
-                                            title="Retirer">✕</button>
-                                </form>
-                            </span>
-                        @endforeach
-                        @if(empty($assignations[$projet['ID']]))
-                            <span style="color:#aaa; font-size:12px;">Aucun collaborateur assigné</span>
-                        @endif
-                    </div>
-
-                    {{-- Formulaire d'ajout --}}
-                    <form action="{{ route('admin.projets.collaborateurs.assign', $projet['ID']) }}"
-                          method="POST" style="display:flex; gap:8px; align-items:center; margin-top:6px;">
-                        @csrf
-                        <select name="user_id" class="textzone" style="height:36px; width:auto; flex:1;">
-                            @foreach($collaborateurs as $collab)
-                                <option value="{{ $collab['id'] }}">{{ $collab['name'] }}</option>
-                            @endforeach
-                        </select>
-                        <button class="btn-add-comment" type="submit">Assigner</button>
+        @foreach($projets as $projet)
+            <div class="mb-12 p-10" style="background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="bold">{{ $projet['nom'] }} <span class="text-muted small">— {{ $projet['clientNom'] }}</span></span>
+                    <form action="{{ route('admin.projets.destroy', $projet['id']) }}" method="POST" data-confirm="Supprimer le projet {{ $projet['nom'] }} ?">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="btn-danger small" style="padding:2px 6px;">x</button>
                     </form>
                 </div>
-            @endforeach
-        @endif
+
+                {{-- Collabs --}}
+                <div class="flex-gap-10 mt-10">
+                    @forelse($assignations[$projet['id']] ?? [] as $collab)
+                        <span class="fact-badge fact-badge--inclus" style="display:flex; align-items:center; gap:4px;">
+                            {{ $collab['name'] }}
+                            <form action="{{ route('admin.projets.collaborateurs.remove', [$projet['id'], $collab['user_id']]) }}" method="POST">
+                                @csrf @method('DELETE')
+                                <button type="submit" style="background:none; border:none; color:#ef4444; cursor:pointer;" class="bold">×</button>
+                            </form>
+                        </span>
+                    @empty
+                        <span class="text-muted small">Aucun collaborateur.</span>
+                    @endforelse
+                </div>
+
+                <form action="{{ route('admin.projets.collaborateurs.assign', $projet['id']) }}" method="POST" class="mt-10 flex-gap-10">
+                    @csrf
+                    <select name="user_id" class="textzone" style="flex:1;">
+                        @foreach($collaborateurs as $collab)
+                            <option value="{{ $collab['id'] }}">{{ $collab['name'] }}</option>
+                        @endforeach
+                    </select>
+                    <button class="btn-add-comment small" type="submit">Ajouter</button>
+                </form>
+            </div>
+        @endforeach
     </div>
 
     {{-- ===== TICKETS / FORCER STATUTS ===== --}}
     <div class="tuile" id="tickets" style="flex: 1 1 100%;">
-        <h3>Tickets &amp; forcer statuts</h3>
+        <p class="titre">Maintenance des Tickets</p>
         <div class="table-wrapper">
-            <table class="Tickets-table">
+            <table class="Tickets-table admin-table">
                 <thead class="Tickets-head">
-                    <tr>
-                        <th>ID</th><th>Projet</th><th>Nom</th><th>Statut actuel</th><th>Action</th><th></th>
-                    </tr>
+                    <tr><th>Projet</th><th>Ticket</th><th>Statut</th><th>Changer</th><th>Action</th></tr>
                 </thead>
                 <tbody>
                     @foreach($tickets as $ticket)
                         <tr>
-                            <td>{{ $ticket['ID'] }}</td>
-                            <td>{{ $ticket['projetNom'] }}</td>
-                            <td>{{ $ticket['Nom'] }}</td>
-                            <td>{{ $ticket['Status'] }}</td>
-                            <td class="force-status">
-                                <form action="{{ route('admin.tickets.status', $ticket['ID']) }}"
-                                      method="POST"
-                                      style="display:flex; gap:6px; align-items:center;">
-                                    @csrf
-                                    @method('PATCH')
-                                    <select name="new_status" class="textzone" style="height:36px; width:auto;">
-                                        <option value="Ouvert"   @selected($ticket['Status'] === 'Ouvert')>Ouvert</option>
-                                        <option value="En cours" @selected($ticket['Status'] === 'En cours')>En cours</option>
-                                        <option value="Terminé"  @selected($ticket['Status'] === 'Terminé')>Terminé</option>
-                                        <option value="Bloqué"   @selected($ticket['Status'] === 'Bloqué')>Bloqué</option>
+                            <td class="small">{{ $ticket['projetNom'] }}</td>
+                            <td class="bold">{{ $ticket['nom'] }}</td>
+                            <td><span class="fact-badge fact-badge--inclus">{{ $ticket['statut'] }}</span></td>
+                            <td>
+                                <form action="{{ route('admin.tickets.status', $ticket['id']) }}" method="POST" style="display:flex; gap:4px;">
+                                    @csrf @method('PATCH')
+                                    <select name="new_status" class="textzone small" style="width:auto;">
+                                        <option value="Ouvert"   @selected($ticket['statut'] === 'Ouvert')>Ouvert</option>
+                                        <option value="En cours" @selected($ticket['statut'] === 'En cours')>En cours</option>
+                                        <option value="Terminé"  @selected($ticket['statut'] === 'Terminé')>Terminé</option>
+                                        <option value="Bloqué"   @selected($ticket['statut'] === 'Bloqué')>Bloqué</option>
+                                        <option value="Refusé par client" @selected($ticket['statut'] === 'Refusé par client')>Refusé</option>
+                                        <option value="Facturation acceptée" @selected($ticket['statut'] === 'Facturation acceptée')>Validé</option>
                                     </select>
-                                    <button class="btn-add-comment" type="submit">Forcer</button>
+                                    <button class="btn-add-comment small" type="submit">OK</button>
                                 </form>
                             </td>
                             <td>
-                                <form action="{{ route('admin.tickets.destroy', $ticket['ID']) }}" method="POST"
-                                      onsubmit="return confirm('Supprimer le ticket #{{ $ticket['ID'] }} ?')">
+                                <form action="{{ route('admin.tickets.destroy', $ticket['id']) }}" method="POST" data-confirm="Supprimer le ticket #{{ $ticket['id'] }} ?">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="btn-danger" style="padding:4px 8px; font-size:12px;">Supprimer</button>
+                                    <button type="submit" class="btn-danger small">Suppr.</button>
                                 </form>
                             </td>
                         </tr>

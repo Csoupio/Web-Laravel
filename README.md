@@ -1,59 +1,93 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Système de Gestion de Ticketing et Facturation
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Une plateforme web complète et moderne pour la gestion de projets, le suivi du temps et la facturation client, développée avec le framework **Laravel**.
 
-## About Laravel
+## 🚀 Fonctionnalités
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### 👤 Espace Client
+- **Dashboard Dynamique** : Visualisation globale des projets et tickets en cours.
+- **Gestion des Tickets** : Création, consultation et suivi des bugs ou évolutions.
+- **Collaboration** : Ajout de commentaires en temps réel sur les tickets.
+- **Validation Budgétaire** : Soumission et approbation des temps passés pour facturation.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 🛠️ Espace Collaborateur
+- **Saisie de Temps** : Enregistrement précis des heures travaillées par ticket.
+- **Suivi de Projet** : Accès aux détails des projets assignés.
+- **Reporting** : Consultation des rapports de temps par projet.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 👑 Espace Administrateur
+- **Gestion des Utilisateurs** : Création et gestion des comptes Administrateurs, Collaborateurs et Clients.
+- **Gestion des Projets** : Création de projets, assignation de ressources et définition des budgets/contrats.
+- **Maintenance du Système** : Forçage de statut des tickets et gestion globale de la base de données.
 
-## Learning Laravel
+## 🛠️ Stack Technique
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **Framework** : Laravel 12.x
+- **Frontend** : Blade, JavaScript (ES6+), Vanilla CSS
+- **Base de données** : SQLite (par défaut)
+- **Tooling** : Vite, Composer
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## ⚙️ Installation
 
-## Laravel Sponsors
+### Prérequis
+- **PHP** >= 8.2
+- **Composer**
+- **Node.js** & **NPM**
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Étapes rapides
+Pour installer et lancer le projet rapidement, utilisez le script de setup intégré :
 
-### Premium Partners
+```bash
+# 1. Installer les dépendances et configurer le projet
+npm run setup
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# 2. Lancer le serveur de développement et Vite
+npm run dev
+```
 
-## Contributing
+### Installation Manuelle
+Si vous préférez installer le projet étape par étape :
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1. **Clonage & Dépendances**
+   ```bash
+   composer install
+   npm install
+   ```
 
-## Code of Conduct
+2. **Configuration**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+3. **Base de données**
+   ```bash
+   touch database/database.sqlite
+   php artisan migrate --seed
+   ```
 
-## Security Vulnerabilities
+4. **Lancement**
+   ```bash
+   php artisan serve
+   npm run dev
+   ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🔑 Identifiants de test
 
-## License
+Le système est livré avec des données de test via le `seed`. Voici les accès par défaut :
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+| Rôle | Email | Mot de passe |
+| :--- | :--- | :--- |
+| **Administrateur** | `alice@admin.com` | `admin123` |
+| **Collaborateur** | `baptiste@agence.com` | `collab123` |
+| **Client** | `francois@acme.com` | `client123` |
+
+## 📁 Structure du Projet
+
+- `app/Http/Controllers/` : Logique de contrôle pour la facturation, les tickets et l'admin.
+- `resources/views/` : Vues Blade organisées par modules (auth, client, admin, ticket).
+- `public/css/` : Design system centralisé (home.css, auth.css, etc.).
+- `routes/web.php` : Définition des routes et protections par middlewares.
+
+---
+*Projet réalisé dans le cadre du cours de développement web (Laravel).*

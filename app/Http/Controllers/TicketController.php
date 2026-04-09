@@ -3,74 +3,52 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\Ticket;
+use App\Models\Projet;
+use App\Models\TimeEntry;
+use Illuminate\Support\Facades\Auth;
 
 class TicketController extends Controller
 {
     public function show($id)
     {
-        $sessionUser = session('user');
-        $userId      = is_array($sessionUser) ? $sessionUser['id'] : $sessionUser->id;
-        $role        = is_array($sessionUser) ? $sessionUser['role'] : $sessionUser->role;
+        $user = Auth::user();
+        if (!$user) return redirect()->route('login');
 
-        $ticket = DB::table('ticket')
-                    ->join('projets', 'ticket.IDProjet', '=', 'projets.ID')
-                    ->select('ticket.*', 'projets.Nom as projetNom')
-                    ->where('ticket.ID', $id)
-                    ->first();
+        $ticket = Ticket::with(['projet', 'timeEntries.user'])->find($id);
 
         if (!$ticket) {
             abort(404, 'Ticket introuvable.');
         }
 
         // Vérification des droits d'accès
-        if ($role === 'Collaborateur') {
-            $hasAccess = DB::table('projet_user')
-                ->where('projet_id', $ticket->IDProjet)
-                ->where('user_id', $userId)
-                ->exists();
+        if ($user->role === 'Collaborateur') {
+            $hasAccess = $user->projets()->where('projets.id', $ticket->projet_id)->exists();
             if (!$hasAccess) abort(403, 'Accès refusé.');
-        } elseif ($role === 'Client') {
-            $hasAccess = DB::table('clients')
-                ->where('ID', $ticket->IDProjet)
-                ->where('user_id', $userId)
-                ->exists();
-            if (!$hasAccess) abort(403, 'Accès refusé.');
+        } elseif ($user->role === 'Client') {
+            $client = $user->client;
+            if (!$client || !$client->projets->contains($ticket->projet_id)) {
+                abort(403, 'Accès refusé.');
+            }
         }
 
-        $ticket = (array) $ticket;
+        $timeEntries = $ticket->timeEntries;
+        $totalTemps      = $timeEntries->sum('duree');
+        $tempsFacturable = $timeEntries->where('facturable', true)->sum('duree');
 
-        // ── Entrées de temps ──────────────────────────────────────────────
-        $timeEntries = DB::table('time_entries')
-            ->join('users', 'time_entries.IDUser', '=', 'users.id')
-            ->select('time_entries.*', 'users.name as userName')
-            ->where('time_entries.IDTicket', $id)
-            ->orderBy('time_entries.date', 'desc')
-            ->get()
-            ->map(fn($i) => (array) $i)
-            ->toArray();
-
-        $totalTemps      = array_sum(array_column($timeEntries, 'duree'));
-        $tempsFacturable = array_sum(
-            array_map(fn($e) => $e['facturable'] ? $e['duree'] : 0, $timeEntries)
-        );
-
-        return view('tickets.show', compact('ticket', 'timeEntries', 'totalTemps', 'tempsFacturable', 'role'));
+        return view('tickets.show', [
+            'ticket' => $ticket,
+            'timeEntries' => $timeEntries,
+            'totalTemps' => $totalTemps,
+            'tempsFacturable' => $tempsFacturable,
+            'role' => $user->role
+        ]);
     }
 
     // Afficher le formulaire de création pour un projet donné
     public function create($projetId)
     {
-        $projet = DB::table('projets')
-                    ->where('ID', $projetId)
-                    ->first();
-
-        if (!$projet) {
-            abort(404, 'Projet introuvable.');
-        }
-
-        $projet = (array) $projet;
-
+        $projet = Projet::findOrFail($projetId);
         return view('tickets.create', compact('projet'));
     }
 
@@ -81,21 +59,63 @@ class TicketController extends Controller
             'project' => 'required|integer',
         ]);
 
-        $newId = DB::table('ticket')->insertGetId([
-            'Nom'          => $request->input('title'),
-            'Descritpion'  => $request->input('description'),
-            'IDProjet'     => $request->input('project'),
-            'Status'       => 'Ouvert',
-            'Priorité'     => $request->input('priority'),
-            'Type'         => $request->input('type'),
-            'Temps_Estime' => $request->input('estimated_time', 0),
+        $ticket = Ticket::create([
+            'nom'               => $request->input('title'),
+            'description'       => $request->input('description'),
+            'projet_id'         => $request->input('project'),
+            'statut'            => 'Ouvert',
+            'priorite'          => $request->input('priority'),
+            'type'              => $request->input('type'),
+            'temps_estime'      => $request->input('estimated_time', 0),
         ]);
 
-        return redirect()->route('tickets.show', $newId);
+        return redirect()->route('tickets.show', $ticket->id);
     }
 
     public function addComment(Request $request, $id)
     {
         return redirect()->route('tickets.show', $id);
+    }
+
+    /**
+     * API: Store a new ticket and return JSON
+     */
+    public function storeApi(Request $request)
+    {
+        try {
+            $request->validate([
+                'title'       => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'project_id'  => 'required|integer',
+                'priority'    => 'nullable|string',
+                'type'        => 'nullable|string',
+            ]);
+
+            $ticket = Ticket::create([
+                'nom'               => $request->input('title'),
+                'description'       => $request->input('description'),
+                'projet_id'         => $request->input('project_id'),
+                'statut'            => 'Ouvert',
+                'priorite'          => $request->input('priority'),
+                'type'              => $request->input('type'),
+                'temps_estime'      => $request->input('estimated_time', 0),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'ticket'  => [
+                    'id'       => $ticket->id,
+                    'nom'      => $ticket->nom,
+                    'status'   => $ticket->statut,
+                    'priorite' => $ticket->priorite,
+                    'url'      => route('tickets.show', $ticket->id)
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
     }
 }

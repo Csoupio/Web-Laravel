@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Ticketing')</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" href="{{ asset('css/ticket-template.css') }}">
     <link rel="stylesheet" href="{{ asset('css/time-tracking.css') }}">
     @stack('styles')
@@ -24,11 +25,11 @@
                 <button id="loginmenu" class="login" type="button">Votre Compte</button>
                 <div id="dropdownMenu" class="dropdown-content">
                     <a href="{{ route('projets.index') }}" class="menu-item">Mes projets</a>
-                    @if(session('user') && (is_array(session('user')) ? session('user')['role'] : session('user')->role) === 'Administrateur')
+                    @if(Auth::check() && Auth::user()->role === 'Administrateur')
                     <a href="{{ route('admin.index') }}" class="menu-item">Espace administrateur</a>
                     @endif
                     <a href="{{ route('dashboard') }}" class="menu-item">Dashboard</a>
-                    <a href="{{ route('facturation.validation.index') }}" class="menu-item">✔ Validation facturation</a>
+                    <a href="{{ route('facturation.validation.index') }}" class="menu-item">Validation facturation</a>
                     <a href="{{ route('logout') }}" class="menu-item">Se déconnecter</a>
                 </div>
             </div>

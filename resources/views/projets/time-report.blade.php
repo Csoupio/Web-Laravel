@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Rapport de temps — ' . $projet->Nom)
+@section('title', 'Rapport de temps — ' . $projet->nom)
 @section('header-title', 'Rapport de temps')
 
 @section('content')
@@ -8,7 +8,7 @@
 
     {{-- En-tête projet --}}
     <div class="tuile" style="margin-bottom:16px;">
-        <p class="titre">📊 Rapport de temps — {{ $projet->Nom }}</p>
+        <p class="titre">Rapport de temps — {{ $projet->nom }}</p>
         <p style="color:#666; font-size:13px;">
             Suivi complet du temps passé et des heures facturables
         </p>
@@ -111,24 +111,24 @@
                     <tbody>
                         @foreach($entries as $entry)
                             <tr class="Tickets-ligne">
-                                <td>{{ \Carbon\Carbon::parse($entry['date'])->format('d/m/Y') }}</td>
+                                <td>{{ \Carbon\Carbon::parse($entry->date)->format('d/m/Y') }}</td>
                                 <td>
-                                    <a href="{{ route('tickets.show', $entry['IDTicket']) }}"
+                                    <a href="{{ route('tickets.show', $entry->ticket_id) }}"
                                        style="color:#6c6cff; text-decoration:none;">
-                                        {{ $entry['ticketNom'] }}
+                                        {{ $entry->ticket->nom ?? 'Ticket supprimé' }}
                                     </a>
                                 </td>
-                                <td>{{ $entry['userName'] }}</td>
-                                <td><strong>{{ number_format($entry['duree'], 2) }}h</strong></td>
+                                <td>{{ $entry->user->name ?? 'Anonyme' }}</td>
+                                <td><strong>{{ number_format($entry->duree, 2) }}h</strong></td>
                                 <td>
-                                    @if($entry['facturable'])
+                                    @if($entry->facturable)
                                         <span style="color:green; font-weight:700;">✓ Facturable</span>
                                     @else
                                         <span style="color:#999;">✗ Non fact.</span>
                                     @endif
                                 </td>
                                 <td style="max-width:250px; white-space:normal;">
-                                    {{ $entry['commentaire'] ?? '—' }}
+                                    {{ $entry->description ?? '—' }}
                                 </td>
                             </tr>
                         @endforeach
@@ -152,7 +152,7 @@
         @endif
 
         <div style="margin-top:16px;">
-            <a href="{{ route('projets.show', $projet->ID) }}">
+            <a href="{{ route('projets.show', $projet->id) }}">
                 <button type="button" class="btn-staff">← Retour au projet</button>
             </a>
         </div>

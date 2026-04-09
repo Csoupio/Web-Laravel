@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\TimeEntry;
+use App\Models\Ticket;
+use App\Models\Projet;
+use Illuminate\Support\Facades\Auth;
 
 class TimeEntryController extends Controller
 {
@@ -12,52 +15,38 @@ class TimeEntryController extends Controller
         $request->validate([
             'date'        => 'required|date',
             'duree'       => 'required|numeric|min:0.25',
-            'commentaire' => 'nullable|string|max:1000',
+            'description' => 'nullable|string|max:1000',
             'facturable'  => 'nullable|boolean',
         ]);
 
-        $sessionUser = session('user');
-        if (!$sessionUser) {
-            return redirect()->route('login')->with('error', 'Vous devez être connecté.');
-        }
-
-        $userId = is_array($sessionUser) ? $sessionUser['id'] : $sessionUser->id;
-        $role   = is_array($sessionUser) ? $sessionUser['role'] : $sessionUser->role;
+        $user = Auth::user();
+        if (!$user) return redirect()->route('login');
 
         // Seuls les collaborateurs peuvent saisir du temps
-        if ($role !== 'Collaborateur') {
+        if ($user->role !== 'Collaborateur') {
             return back()->with('error', 'Seuls les collaborateurs peuvent enregistrer du temps.');
         }
 
         // Vérifier que le collaborateur est assigné au projet du ticket
-        $ticket = DB::table('ticket')->where('ID', $ticketId)->first();
-        if (!$ticket) abort(404);
+        $ticket = Ticket::findOrFail($ticketId);
 
-        $isAssigned = DB::table('projet_user')
-            ->where('projet_id', $ticket->IDProjet)
-            ->where('user_id', $userId)
-            ->exists();
+        $isAssigned = $user->projets()->where('projets.id', $ticket->projet_id)->exists();
 
         if (!$isAssigned) {
             return back()->with('error', 'Vous n\'êtes pas assigné à ce projet.');
         }
 
-        DB::table('time_entries')->insert([
-            'IDTicket'    => $ticketId,
-            'IDUser'      => $userId,
+        TimeEntry::create([
+            'ticket_id'   => $ticketId,
+            'user_id'     => $user->id,
             'date'        => $request->input('date'),
             'duree'       => $request->input('duree'),
-            'commentaire' => $request->input('commentaire'),
-            'facturable'  => $request->boolean('facturable', true) ? 1 : 0,
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'description' => $request->input('description'),
+            'facturable'  => $request->boolean('facturable', true),
         ]);
 
         // Après chaque saisie, on vérifie si le contrat est épuisé
-        $ticket = DB::table('ticket')->where('ID', $ticketId)->first();
-        if ($ticket) {
-            FacturationController::checkAndSwitchAuto($ticket->IDProjet);
-        }
+        FacturationController::checkAndSwitchAuto($ticket->projet_id);
 
         return redirect()->route('tickets.show', $ticketId)
                          ->with('success_time', 'Temps enregistré avec succès.');
@@ -65,11 +54,9 @@ class TimeEntryController extends Controller
 
     public function destroy($id)
     {
-        $entry = DB::table('time_entries')->where('ID', $id)->first();
-        if (!$entry) abort(404);
-
-        $ticketId = $entry->IDTicket;
-        DB::table('time_entries')->where('ID', $id)->delete();
+        $entry = TimeEntry::findOrFail($id);
+        $ticketId = $entry->ticket_id;
+        $entry->delete();
 
         return redirect()->route('tickets.show', $ticketId)
                          ->with('success_time', 'Entrée supprimée.');
@@ -77,43 +64,49 @@ class TimeEntryController extends Controller
 
     public function projetReport($projetId)
     {
-        $projet = DB::table('projets')->where('ID', $projetId)->first();
-        if (!$projet) abort(404);
+        $user = Auth::user();
+        if (!$user) return redirect()->route('login');
 
-        $entries = DB::table('time_entries')
-            ->join('ticket', 'time_entries.IDTicket', '=', 'ticket.ID')
-            ->join('users', 'time_entries.IDUser', '=', 'users.id')
-            ->select('time_entries.*', 'ticket.Nom as ticketNom', 'users.name as userName')
-            ->where('ticket.IDProjet', $projetId)
-            ->orderBy('time_entries.date', 'desc')
-            ->get()->map(fn($i) => (array) $i)->toArray();
+        $projet = Projet::with(['tickets.timeEntries.user'])->findOrFail($projetId);
 
-        $totalHeures          = array_sum(array_column($entries, 'duree'));
-        $heuresFacturables    = array_sum(array_map(fn($e) => $e['facturable'] ? $e['duree'] : 0, $entries));
+        $entries = TimeEntry::whereHas('ticket', function($q) use ($projetId) {
+            $q->where('projet_id', $projetId);
+        })->with(['ticket', 'user'])->orderBy('date', 'desc')->get();
+
+        $totalHeures          = $entries->sum('duree');
+        $heuresFacturables    = $entries->where('facturable', true)->sum('duree');
         $heuresNonFacturables = $totalHeures - $heuresFacturables;
 
         $parTicket = [];
         foreach ($entries as $e) {
-            $key = $e['IDTicket'];
+            $key = $e->ticket_id;
             if (!isset($parTicket[$key])) {
-                $parTicket[$key] = ['ticketNom' => $e['ticketNom'], 'total' => 0, 'facturable' => 0];
+                $parTicket[$key] = ['ticketNom' => $e->ticket->nom, 'total' => 0, 'facturable' => 0];
             }
-            $parTicket[$key]['total']      += $e['duree'];
-            $parTicket[$key]['facturable'] += $e['facturable'] ? $e['duree'] : 0;
+            $parTicket[$key]['total']      += $e->duree;
+            $parTicket[$key]['facturable'] += $e->facturable ? $e->duree : 0;
         }
 
         $contratHeures  = $projet->contrat_heures ?? 0;
-        $heuresIncluses = DB::table('time_entries')
-            ->join('ticket', 'time_entries.IDTicket', '=', 'ticket.ID')
-            ->where('ticket.IDProjet', $projetId)
-            ->where('ticket.mode_facturation', 'inclus')
-            ->sum('time_entries.duree');
+        
+        $heuresIncluses = TimeEntry::whereHas('ticket', function($q) use ($projetId) {
+            $q->where('projet_id', $projetId)
+              ->where('mode_facturation', 'inclus');
+        })->sum('duree');
+        
         $soldeContrat = max(0, $contratHeures - $heuresIncluses);
 
-        return view('projets.time-report', compact(
-            'projet', 'entries', 'totalHeures', 'heuresFacturables',
-            'heuresNonFacturables', 'parTicket',
-            'contratHeures', 'heuresIncluses', 'soldeContrat'
-        ));
+        return view('projets.time-report', [
+            'projet' => $projet,
+            'entries' => $entries,
+            'totalHeures' => $totalHeures,
+            'heuresFacturables' => $heuresFacturables,
+            'heuresNonFacturables' => $heuresNonFacturables,
+            'parTicket' => $parTicket,
+            'contratHeures' => $contratHeures,
+            'heuresIncluses' => $heuresIncluses,
+            'soldeContrat' => $soldeContrat
+        ]);
     }
 }
+

@@ -3,24 +3,32 @@
 @section('title', 'Validation facturation')
 @section('header-title', 'Validation des tickets facturables')
 
-@section('content')
-<div style="padding:15px; width:100%; box-sizing:border-box;">
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/validation.css') }}">
+@endpush
 
-    <div class="tuile" style="margin-bottom:16px;">
-        <p class="titre">📋 Tickets soumis à votre validation</p>
-        <p style="color:#666; font-size:13px;">
-            Consultez chaque ticket, vérifiez le temps passé, puis acceptez ou refusez la facturation.
+@section('content')
+<div class="corp">
+
+    <div class="tuile mb-12">
+        <p class="titre">Tickets soumis à validation</p>
+        <p class="text-muted small">
+            @if(($role ?? '') === 'Client')
+                Consultez chaque ticket, vérifiez le temps passé, puis acceptez ou refusez la facturation.
+            @else
+                Vue d'ensemble des tickets en attente de validation client.
+            @endif
         </p>
     </div>
 
     @if(session('success_fact'))
-        <div class="toast show" style="position:static; margin-bottom:12px;">{{ session('success_fact') }}</div>
+        <div class="toast show mb-12" style="position:static;">{{ session('success_fact') }}</div>
     @endif
 
     <div class="tuile">
         @if(count($tickets) > 0)
             <div class="table-wrapper">
-                <table class="Tickets-table" style="font-size:13px;">
+                <table class="Tickets-table validation-table">
                     <thead class="Tickets-head">
                         <tr>
                             <th>Ticket</th>
@@ -32,25 +40,25 @@
                     </thead>
                     <tbody>
                         @foreach($tickets as $ticket)
-                            @php
-                                $v = $ticket['validation_client'];
-                            @endphp
+                            @php $v = $ticket['validation_client']; @endphp
                             <tr class="Tickets-ligne">
-                                <td>{{ $ticket['Nom'] }}</td>
+                                <td>{{ $ticket['nom'] }}</td>
                                 <td>{{ $ticket['projetNom'] }}</td>
-                                <td>{{ $ticket['Status'] }}</td>
+                                <td>{{ $ticket['statut'] }}</td>
                                 <td>
                                     @if($v === 'en_attente')
-                                        <span class="fact-badge fact-badge--attente">⏳ En attente</span>
+                                        <span class="fact-badge fact-badge--attente">En attente</span>
                                     @elseif($v === 'accepte')
-                                        <span class="fact-badge fact-badge--accepte">✔ Accepté</span>
+                                        <span class="fact-badge fact-badge--accepte">Accepté</span>
                                     @elseif($v === 'refuse')
-                                        <span class="fact-badge fact-badge--refuse">✘ Refusé</span>
+                                        <span class="fact-badge fact-badge--refuse">Refusé</span>
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('facturation.validation.show', $ticket['ID']) }}">
-                                        <button class="btn-add-comment" type="button">Consulter</button>
+                                    <a href="{{ route('facturation.validation.show', $ticket['id']) }}">
+                                        <button class="btn-add-comment" type="button">
+                                            {{ (($role ?? '') === 'Client' && $v === 'en_attente') ? 'Valider' : 'Consulter' }}
+                                        </button>
                                     </a>
                                 </td>
                             </tr>
@@ -59,7 +67,7 @@
                 </table>
             </div>
         @else
-            <p style="color:#aaa; font-size:14px; text-align:center; padding:20px;">
+            <p class="text-muted" style="text-align:center; padding:20px;">
                 Aucun ticket en attente de validation.
             </p>
         @endif

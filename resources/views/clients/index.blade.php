@@ -56,13 +56,13 @@
                 <tbody>
                     @forelse($tickets as $ticket)
                         <tr class="Tickets-ligne"
-                            onclick="window.location.href='{{ route('tickets.show', $ticket['ID']) }}'"
+                            onclick="window.location.href='{{ route('tickets.show', $ticket['id']) }}'"
                             style="cursor:pointer;">
-                            <td>{{ $ticket['ID'] }}</td>
+                            <td>{{ $ticket['id'] }}</td>
                             <td>{{ $ticket['projetNom'] }}</td>
-                            <td>{{ $ticket['Nom'] }}</td>
-                            <td class="status-cell">{{ $ticket['Status'] }}</td>
-                            <td class="priority-cell">{{ $ticket['Priorité'] ?? '-' }}</td>
+                            <td>{{ $ticket['nom'] }}</td>
+                            <td class="status-cell">{{ $ticket['statut'] }}</td>
+                            <td class="priority-cell">{{ $ticket['priorite'] ?? '-' }}</td>
                         </tr>
                     @empty
                         <tr>

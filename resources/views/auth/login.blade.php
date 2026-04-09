@@ -1,4 +1,4 @@
-@extends('layouts.auth')
+@extends('layouts.guest')
 
 @section('title', 'Connexion')
 

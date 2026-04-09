@@ -1,3 +1,28 @@
+// ── Gestion globale des confirmations ────────────────────────
+document.addEventListener('submit', function(e) {
+    const confirmMsg = e.target.getAttribute('data-confirm');
+    if (confirmMsg && !confirm(confirmMsg)) {
+        e.preventDefault();
+    }
+}, true);
+
+document.addEventListener('click', function(e) {
+    // Confirmation sur clic (boutons, liens)
+    const btn = e.target.closest('[data-confirm]');
+    if (btn && (e.target.tagName !== 'BUTTON' || (e.target.tagName === 'BUTTON' && e.target.type !== 'submit'))) {
+        const confirmMsg = btn.getAttribute('data-confirm');
+        if (!confirm(confirmMsg)) {
+            e.preventDefault();
+        }
+    }
+    
+    // Redirection auto via data-href
+    const redirectUrl = e.target.closest('[data-href]')?.getAttribute('data-href');
+    if (redirectUrl) {
+        window.location.href = redirectUrl;
+    }
+}, true);
+
 const menuButton = document.getElementById('loginmenu');
 const dropdownMenu = document.getElementById('dropdownMenu');
 
@@ -10,65 +35,6 @@ if (menuButton && dropdownMenu) {
 const ResetPasswordLink = document.getElementById('resetPswd');
 const zonePswd = document.getElementById('NewPswd');
 const cacheLogin = document.getElementById('login');
-
-// ── Formulaire création de ticket ──────────────────────────
-
-function checkTitle() {
-    const title = document.getElementById('title');
-    const errorTitle = document.getElementById('title_error');
-    if (!title) return 0;
-    if (title.value == "") { errorTitle.classList.remove('titanic'); return 1; }
-    else { errorTitle.classList.add('titanic'); return 0; }
-}
-
-function checkDesc() {
-    const description = document.getElementById('description');
-    const errorDesc = document.getElementById('description_error');
-    if (!description) return 0;
-    if (description.value == "") { errorDesc.classList.remove('titanic'); return 1; }
-    else { errorDesc.classList.add('titanic'); return 0; }
-}
-
-function checkProject() {
-    const project = document.getElementById('project');
-    const errorProject = document.getElementById('project_error');
-    if (!project) return 0;
-    if (project.value == "") { errorProject.classList.remove('titanic'); return 1; }
-    else { errorProject.classList.add('titanic'); return 0; }
-}
-
-function checkPriority() {
-    const priority = document.getElementById('priority');
-    const errorPriority = document.getElementById('priority_error');
-    if (!priority) return 0;
-    if (priority.value == "") { errorPriority.classList.remove('titanic'); return 1; }
-    else { errorPriority.classList.add('titanic'); return 0; }
-}
-
-function checkType() {
-    const type = document.getElementById('type');
-    const errorType = document.getElementById('type_error');
-    if (!type) return 0;
-    if (type.value == "") { errorType.classList.remove('titanic'); return 1; }
-    else { errorType.classList.add('titanic'); return 0; }
-}
-
-function checkTime() {
-    const time = document.getElementById('estimated_time');
-    const errorTime = document.getElementById('estimated_time_error');
-    if (!time) return 0;
-    if (time.value === "" || parseFloat(time.value) <= 0) { errorTime.classList.remove('titanic'); return 1; }
-    else { errorTime.classList.add('titanic'); return 0; }
-}
-
-const formTicket = document.getElementById('ticketForm');
-if (formTicket) {
-    formTicket.addEventListener('submit', function(event) {
-        event.preventDefault();
-        let nb_errors = checkTitle() + checkDesc() + checkProject() + checkPriority() + checkType() + checkTime();
-        if (nb_errors == 0) formTicket.submit();
-    });
-}
 
 // ── Création d'un compte ───────────────────────────────────
 
@@ -234,6 +200,113 @@ function checkProjetDescription() {
     if (!desc) return 0;
     if (desc.value == "") { desc_error.classList.remove('titanic'); return 1; }
     else { desc_error.classList.add('titanic'); return 0; }
+}
+
+// ── Gestion des Modales ───────────────────────────────────
+
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Bloquer le défilement
+    }
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+// ── API Ticket Creation ───────────────────────────────────
+
+const btnSubmitTicket = document.getElementById('btnSubmitTicket');
+const formApiCreateTicket = document.getElementById('formApiCreateTicket');
+
+if (btnSubmitTicket && formApiCreateTicket) {
+    btnSubmitTicket.addEventListener('click', async function() {
+        const formData = new FormData(formApiCreateTicket);
+        const data = Object.fromEntries(formData.entries());
+
+        // Reset errors logic (if any)
+        btnSubmitTicket.disabled = true;
+        btnSubmitTicket.innerText = 'Création...';
+
+        try {
+            const response = await fetch('/api/v1/tickets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // 1. Fermer la modale
+                closeModal('modalCreateTicket');
+                formApiCreateTicket.reset();
+
+                // 2. Mise à jour dynamique du tableau
+                updateTicketTable(result.ticket);
+
+                // 3. Notification (facultatif si toast existant)
+                alert('Ticket créé avec succès !');
+            } else {
+                alert('Erreur : ' + (result.message || 'Impossible de créer le ticket'));
+            }
+        } catch (error) {
+            console.error('API Error:', error);
+            alert('Une erreur réseau est survenue.');
+        } finally {
+            btnSubmitTicket.disabled = false;
+            btnSubmitTicket.innerText = 'Créer le ticket';
+        }
+    });
+}
+
+function updateTicketTable(ticket) {
+    const tableBody = document.querySelector('#tableTickets tbody');
+    const noTicketsRow = document.getElementById('noTicketsRow');
+    const ticketCount = document.getElementById('ticketCount');
+
+    if (noTicketsRow) noTicketsRow.remove();
+
+    const newRow = document.createElement('tr');
+    newRow.className = 'Tickets-ligne';
+    newRow.innerHTML = `
+        <td>#${ticket.id}</td>
+        <td class="bold">${ticket.nom}</td>
+        <td><span class="fact-badge fact-badge--inclus">${ticket.status}</span></td>
+        <td>${ticket.priorite || '-'}</td>
+        <td>
+            <a href="${ticket.url}">
+                <button class="btn-add-comment small" type="button">Voir</button>
+            </a>
+        </td>
+    `;
+
+    // Animation d'entrée
+    newRow.style.opacity = '0';
+    newRow.style.transform = 'translateY(10px)';
+    newRow.style.transition = 'all 0.4s ease';
+
+    tableBody.prepend(newRow);
+
+    // Déclencher l'animation
+    setTimeout(() => {
+        newRow.style.opacity = '1';
+        newRow.style.transform = 'translateY(0)';
+    }, 50);
+
+    // Mettre à jour le compteur
+    if (ticketCount) {
+        ticketCount.innerText = parseInt(ticketCount.innerText) + 1;
+    }
 }
 
 const formAdminProjet = document.getElementById('formAdminProject');

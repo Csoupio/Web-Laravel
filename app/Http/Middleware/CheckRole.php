@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
 
 class CheckRole
 {
@@ -15,18 +16,16 @@ class CheckRole
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        $user = session('user');
-
         // Pas connecté du tout → page de login
-        if (!$user) {
+        if (!Auth::check()) {
             return redirect()->route('login')
                              ->with('error', 'Vous devez être connecté.');
         }
 
-        $userRole = is_array($user) ? $user['role'] : $user->role;
+        $user = Auth::user();
 
         // Connecté mais rôle insuffisant → dashboard
-        if (!in_array($userRole, $roles)) {
+        if (!in_array($user->role, $roles)) {
             return redirect()->route('dashboard')
                              ->with('error', 'Accès refusé : vous n\'avez pas les droits nécessaires.');
         }

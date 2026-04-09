@@ -1,7 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Valider — ' . $ticket['Nom'])
+@section('title', 'Valider — ' . $ticket['nom'])
 @section('header-title', 'Validation de facturation')
+
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/validation.css') }}">
+@endpush
 
 @section('content')
 <div class="corp">
@@ -10,38 +14,42 @@
     <div class="left-panel">
 
         <div class="tuile">
-            <p class="titre">{{ $ticket['Nom'] }}</p>
-            <p style="color:#666; font-size:13px; margin-bottom:8px;">
-                Projet : <strong>{{ $ticket['projetNom'] }}</strong>
-            </p>
+            <p class="titre">{{ $ticket['nom'] }}</p>
+            <p class="text-muted">Projet : <strong>{{ $ticket['projetNom'] }}</strong></p>
 
-            @php $v = $ticket['validation_client']; @endphp
-
-            <div style="margin-bottom:12px;">
+            <div class="mb-12">
+                @php $v = $ticket['validation_client']; @endphp
                 @if($v === 'en_attente')
-                    <span class="fact-badge fact-badge--attente">⏳ En attente de votre validation</span>
+                    <span class="fact-badge fact-badge--attente">En attente de validation</span>
                 @elseif($v === 'accepte')
-                    <span class="fact-badge fact-badge--accepte">✔ Vous avez accepté cette facturation</span>
+                    <span class="fact-badge fact-badge--accepte">Facturation acceptée</span>
                 @elseif($v === 'refuse')
-                    <span class="fact-badge fact-badge--refuse">✘ Vous avez refusé cette facturation</span>
+                    <span class="fact-badge fact-badge--refuse">Facturation refusée</span>
                 @endif
+                <span class="fact-badge fact-badge--facturable">Facturable en supplément</span>
+            </div>
+
+            <div class="mb-10">
+                <strong>Statut du ticket :</strong> {{ $ticket['statut'] }}
             </div>
 
             @if($v === 'refuse' && !empty($ticket['commentaire_refus']))
-                <div style="background:#fee2e2; border:1px solid #fca5a5; border-radius:8px;
-                            padding:10px; margin-bottom:10px; font-size:13px;">
-                    <strong>Votre motif de refus :</strong> {{ $ticket['commentaire_refus'] }}
+                <div class="refusal-motif">
+                    <strong>Motif du refus :</strong> {{ $ticket['commentaire_refus'] }}
                 </div>
             @endif
 
-            <p style="margin-top:8px;">{{ $ticket['Descritpion'] ?? 'Aucune description.' }}</p>
+            <div class="description-section">
+                <strong>Description :</strong>
+                <p>{{ $ticket['description'] ?? 'Aucune description.' }}</p>
+            </div>
         </div>
 
         {{-- Temps passé --}}
         <div class="tuile">
-            <p class="titre">⏱ Temps passé sur ce ticket</p>
+            <p class="titre">Temps passé</p>
 
-            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px;">
+            <div style="display:flex; gap:12px; flex-wrap:wrap;" class="mb-12">
                 <div class="time-badge time-badge--total">
                     <span class="time-badge__label">Total</span>
                     <span class="time-badge__value">{{ number_format($totalTemps, 2) }}h</span>
@@ -50,142 +58,105 @@
                     <span class="time-badge__label">Facturable</span>
                     <span class="time-badge__value">{{ number_format($tempsFacturable, 2) }}h</span>
                 </div>
-                @if(($ticket['Temps_Estime'] ?? 0) > 0)
+                <div class="time-badge time-badge--non-billable">
+                    <span class="time-badge__label">Non fact.</span>
+                    <span class="time-badge__value">{{ number_format($totalTemps - $tempsFacturable, 2) }}h</span>
+                </div>
+                @if(($ticket['temps_estime'] ?? 0) > 0)
                     <div class="time-badge time-badge--estimate">
                         <span class="time-badge__label">Estimé</span>
-                        <span class="time-badge__value">{{ $ticket['Temps_Estime'] }}h</span>
+                        <span class="time-badge__value">{{ $ticket['temps_estime'] }}h</span>
                     </div>
                 @endif
             </div>
 
             @if(count($timeEntries) > 0)
                 <div class="table-wrapper">
-                    <table class="Tickets-table" style="font-size:13px;">
+                    <table class="Tickets-table validation-table">
                         <thead class="Tickets-head">
                             <tr>
-                                <th>Date</th>
-                                <th>Collaborateur</th>
-                                <th>Durée</th>
-                                <th>Facturable</th>
-                                <th>Commentaire</th>
+                                <th>Date</th><th>Collab</th><th>Durée</th><th>Fact.</th><th>Commentaire</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($timeEntries as $entry)
                                 <tr class="Tickets-ligne">
-                                    <td>{{ \Carbon\Carbon::parse($entry['date'])->format('d/m/Y') }}</td>
-                                    <td>{{ $entry['userName'] }}</td>
-                                    <td><strong>{{ number_format($entry['duree'], 2) }}h</strong></td>
-                                    <td>
-                                        @if($entry['facturable'])
-                                            <span style="color:green; font-weight:700;">✓</span>
-                                        @else
-                                            <span style="color:#999;">✗</span>
-                                        @endif
-                                    </td>
-                                    <td style="max-width:220px; white-space:normal;">
-                                        {{ $entry['commentaire'] ?? '—' }}
-                                    </td>
+                                    <td>{{ \Carbon\Carbon::parse($entry->date)->format('d/m/Y') }}</td>
+                                    <td>{{ $entry->user->name ?? 'N/A' }}</td>
+                                    <td><strong>{{ number_format($entry->duree, 2) }}h</strong></td>
+                                    <td>{!! $entry->facturable ? '<span class="text-success">✓</span>' : '<span class="text-muted">✗</span>' !!}</td>
+                                    <td style="white-space:normal;">{{ $entry->description ?? '—' }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
                         <tfoot>
-                            <tr style="background:#f0f0f0; font-weight:700;">
-                                <td colspan="2" style="padding:8px; border:2px solid #333;">TOTAL</td>
-                                <td style="padding:8px; border:2px solid #333;">{{ number_format($totalTemps, 2) }}h</td>
-                                <td style="padding:8px; border:2px solid #333; color:#22c55e;">
-                                    {{ number_format($tempsFacturable, 2) }}h fact.
-                                </td>
-                                <td style="border:2px solid #333;"></td>
+                            <tr>
+                                <td colspan="2">TOTAL</td>
+                                <td>{{ number_format($totalTemps, 2) }}h</td>
+                                <td class="text-success">{{ number_format($tempsFacturable, 2) }}h fact.</td>
+                                <td></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
             @else
-                <p style="color:#aaa; font-size:13px;">Aucune entrée de temps.</p>
+                <p class="text-muted">Aucune entrée de temps.</p>
             @endif
         </div>
-
     </div>
 
-    {{-- ═══ Colonne droite : actions client ═══ --}}
+    {{-- ═══ Colonne droite : actions ═══ --}}
     <div class="right-panel">
 
         @if(session('success_fact'))
-            <div class="toast show" style="position:static; margin-bottom:12px;">{{ session('success_fact') }}</div>
+            <div class="toast show mb-12" style="position:static;">{{ session('success_fact') }}</div>
         @endif
 
-        @if($v === 'en_attente')
+        @if(($role ?? '') === 'Client' && $v === 'en_attente')
 
-            {{-- ACCEPTER --}}
-            <div class="tuile" style="border:2px solid #22c55e;">
-                <p class="titre" style="color:#16a34a;">✔ Accepter la facturation</p>
-                <p style="font-size:13px; color:#555; margin-bottom:12px;">
-                    En acceptant, vous confirmez que le temps passé ({{ number_format($tempsFacturable, 2) }}h)
-                    peut être facturé en supplément du contrat.
-                </p>
-                <form action="{{ route('facturation.accepter', $ticket['ID']) }}" method="POST">
+            <div class="tuile action-card--accept">
+                <p class="titre text-success">Accepter la facturation</p>
+                <p class="text-muted small">En acceptant, vous confirmez que {{ number_format($tempsFacturable, 2) }}h peuvent être facturées.</p>
+                <form action="{{ route('facturation.accepter', $ticket['id']) }}" method="POST">
                     @csrf
-                    <button type="submit" class="btn-add-comment"
-                            style="background:#22c55e; width:100%;">
-                        ✔ Accepter la facturation
-                    </button>
+                    <button type="submit" class="btn-add-comment w-full" style="background:#22c55e;">Accepter</button>
                 </form>
             </div>
 
-            {{-- REFUSER --}}
-            <div class="tuile" style="border:2px solid #ef4444; margin-top:0;">
-                <p class="titre" style="color:#dc2626;">✘ Refuser la facturation</p>
-                <p style="font-size:13px; color:#555; margin-bottom:12px;">
-                    En refusant, le ticket repassera en statut <em>En cours</em> et sera traité à nouveau.
-                </p>
-                <form action="{{ route('facturation.refuser', $ticket['ID']) }}" method="POST"
-                      style="display:flex; flex-direction:column; gap:10px;">
+            <div class="tuile action-card--refuse">
+                <p class="titre text-danger">Refuser la facturation</p>
+                <form action="{{ route('facturation.refuser', $ticket['id']) }}" method="POST" class="form-creation" data-confirm="Confirmer le refus de facturation ?">
                     @csrf
-                    <div>
-                        <label style="font-weight:700; font-size:13px;">Motif du refus (optionnel)</label>
-                        <textarea name="commentaire_refus" class="textzone"
-                                  placeholder="Expliquez pourquoi vous refusez..."
-                                  rows="3"
-                                  style="height:auto; padding:8px; width:100%; resize:vertical; margin-top:6px;"></textarea>
+                    <div class="form-group">
+                        <label>Motif du refus (optionnel)</label>
+                        <textarea name="commentaire_refus" class="textzone w-full" rows="3"></textarea>
                     </div>
-                    <button type="submit" class="btn-danger" style="width:100%;"
-                            onclick="return confirm('Confirmer le refus de facturation ?')">
-                        ✘ Refuser la facturation
-                    </button>
+                    <button type="submit" class="btn-danger w-full">Refuser</button>
                 </form>
             </div>
 
         @elseif($v === 'accepte')
-            <div class="tuile" style="border:2px solid #22c55e;">
-                <p class="titre" style="color:#16a34a;">✔ Facturation acceptée</p>
-                <p style="font-size:13px; color:#555;">
-                    Vous avez validé la facturation de ce ticket.
-                    Le temps facturable est de <strong>{{ number_format($tempsFacturable, 2) }}h</strong>.
-                </p>
+            <div class="tuile action-card--accept">
+                <p class="titre text-success">Facturation acceptée</p>
+                <p class="text-muted small">Le temps facturable est de <strong>{{ number_format($tempsFacturable, 2) }}h</strong>.</p>
             </div>
 
         @elseif($v === 'refuse')
-            <div class="tuile" style="border:2px solid #ef4444;">
-                <p class="titre" style="color:#dc2626;">✘ Facturation refusée</p>
-                <p style="font-size:13px; color:#555;">
-                    Vous avez refusé la facturation. Le ticket a été repassé en cours de traitement.
-                </p>
-                @if(!empty($ticket['commentaire_refus']))
-                    <p style="font-size:13px; margin-top:8px;">
-                        <strong>Motif :</strong> {{ $ticket['commentaire_refus'] }}
-                    </p>
-                @endif
+            <div class="tuile action-card--refuse">
+                <p class="titre text-danger">Facturation refusée</p>
+                <p class="text-muted small">Le ticket est repassé en statut « Refusé par client ».</p>
+            </div>
+
+        @elseif($v === 'en_attente')
+            <div class="tuile action-card--pending">
+                <p class="titre text-warning">En attente de validation</p>
+                <p class="text-muted small">Seul le client peut accepter ou refuser la facturation.</p>
             </div>
         @endif
 
         <a href="{{ route('facturation.validation.index') }}">
-            <button type="button" class="btn-staff" style="margin-top:10px;">
-                ← Retour à la liste
-            </button>
+            <button type="button" class="btn-staff w-full mt-10">← Retour à la liste</button>
         </a>
-
     </div>
-
 </div>
 @endsection

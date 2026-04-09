@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
@@ -15,25 +16,31 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $email    = $request->input('login');
-        $password = $request->input('password');
+        $credentials = [
+            'email'    => $request->input('login'),
+            'password' => $request->input('password'),
+        ];
 
-        $user = DB::table('users')
-                  ->where('email', $email)
-                  ->first();
-
-        if ($user && Hash::check($password, $user->password)) {
-            session(['user' => $user]);
-            return redirect()->route('admin.index');
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            
+            $user = Auth::user();
+            if ($user->role === 'Administrateur') {
+                return redirect()->route('admin.index');
+            }
+            return redirect()->route('dashboard');
         }
 
         return redirect()->route('login')
                          ->with('error', 'Email ou mot de passe incorrect.');
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
-        session()->flush();
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        
         return redirect()->route('login');
     }
 
@@ -44,10 +51,10 @@ class AuthController extends Controller
 
     public function register(Request $request)
     {
-        DB::table('users')->insert([
+        User::create([
             'name'     => $request->input('prenom') . ' ' . $request->input('nom'),
             'email'    => $request->input('email'),
-            'password' => Hash::make($request->input('password')),
+            'password' => $request->input('password'), // User model casts password to hashed
             'role'     => 'Client',
         ]);
 
@@ -55,3 +62,4 @@ class AuthController extends Controller
                          ->with('success', 'Compte créé, vous pouvez vous connecter.');
     }
 }
+
