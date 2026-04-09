@@ -22,10 +22,10 @@ Une plateforme web complète et moderne pour la gestion de projets, le suivi du 
 
 ## 🛠️ Stack Technique
 
-- **Framework** : Laravel 12.x
+- **Framework** : Laravel 11.x / 12.x
 - **Frontend** : Blade, JavaScript (ES6+), Vanilla CSS
-- **Base de données** : SQLite (par défaut)
-- **Tooling** : Vite, Composer
+- **Base de données** : SQLite (standardisée en `snake_case`)
+- **Middlewares** : Gestion personnalisée des rôles (`CheckRole`) et de l'auth (`CheckAuth`).
 
 ## ⚙️ Installation
 
@@ -34,11 +34,11 @@ Une plateforme web complète et moderne pour la gestion de projets, le suivi du 
 - **Composer**
 - **Node.js** & **NPM**
 
-### Étapes rapides
-Pour installer et lancer le projet rapidement, utilisez le script de setup intégré :
+### Installation Rapide
+Le projet inclut un script d'automatisation pour configurer l'environnement :
 
 ```bash
-# 1. Installer les dépendances et configurer le projet
+# 1. Configurer l'environnement (dépendances, base de données, seeding)
 npm run setup
 
 # 2. Lancer le serveur de développement et Vite
@@ -63,7 +63,7 @@ Si vous préférez installer le projet étape par étape :
 3. **Base de données**
    ```bash
    touch database/database.sqlite
-   php artisan migrate --seed
+   php artisan migrate:fresh --seed
    ```
 
 4. **Lancement**
@@ -74,7 +74,7 @@ Si vous préférez installer le projet étape par étape :
 
 ## 🔑 Identifiants de test
 
-Le système est livré avec des données de test via le `seed`. Voici les accès par défaut :
+Le système est livré avec un jeu de données complet via le `seed`. Voici les accès par défaut :
 
 | Rôle | Email | Mot de passe |
 | :--- | :--- | :--- |
@@ -84,10 +84,10 @@ Le système est livré avec des données de test via le `seed`. Voici les accès
 
 ## 📁 Structure du Projet
 
-- `app/Http/Controllers/` : Logique de contrôle pour la facturation, les tickets et l'admin.
+- `app/Models/` : Modèles Eloquent standardisés (sans debt technique).
+- `app/Http/Controllers/` : Logique métier propre et typée.
 - `resources/views/` : Vues Blade organisées par modules (auth, client, admin, ticket).
 - `public/css/` : Design system centralisé (home.css, auth.css, etc.).
-- `routes/web.php` : Définition des routes et protections par middlewares.
 
 ---
-*Projet réalisé dans le cadre du cours de développement web (Laravel).*
+*Projet réalisé dans le cadre d'un cours de développement web sur les standards de production Laravel.*
